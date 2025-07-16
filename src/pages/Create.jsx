@@ -1,5 +1,6 @@
 /** @format */
 
+import { Button } from "@/components/ui/button";
 import {
   Select,
   SelectContent,
@@ -38,7 +39,7 @@ const Create = () => {
           <div className="mb-5">
             <label
               htmlFor="selectobjectType"
-              className="block mb-2 text-lg font-medium "
+              className="block mb-2 text-lg font-medium"
             >
               Select Object Type
             </label>
@@ -92,7 +93,9 @@ const Create = () => {
           {/* class properties */}
           {classProps.length > 0 && (
             <div className="space-y-4">
-              <h3 className="text-xl font-semibold">Fill in the Fields</h3>
+              <h3 className="block mb-2 text-lg font-medium">
+                Fill Metadata Form
+              </h3>
               {classProps.map((prop) => (
                 <div key={prop.propId}>
                   <label htmlFor="" className="block mb-1 font-medium">
@@ -110,6 +113,14 @@ const Create = () => {
               ))}
             </div>
           )}
+
+          {/* submit button */}
+          <div className="mb-5">
+            <label htmlFor="submit" className="block mb-2 text-lg font-medium">
+              Submit
+            </label>
+            <Button>Create Object</Button>
+          </div>
         </form>
       </div>
     </>

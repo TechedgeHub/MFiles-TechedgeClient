@@ -13,7 +13,7 @@ export async function fetchObjectTypes() {
 //class objectId
 export async function fetchObjectClasses(objectId) {
   const res = await fetch(
-    `${BASE_URL}/api/MfilesObjects/GetObjectClasses/${objectId}` // Fixed: added $ and used objectId parameter
+    `${BASE_URL}/api/MfilesObjects/GetObjectClasses/${objectId}`
   );
   if (!res.ok)
     throw new Error("Failed to fetch classes, ensure you pick object ID");
@@ -25,5 +25,31 @@ export async function fetchClassProps(objectTypeId, classId) {
     `${BASE_URL}/api/MfilesObjects/ClassProps/${objectTypeId}/${classId}`
   );
   if (!res.ok) throw new Error("Failed to fetch class properties");
+  return await res.json();
+}
+
+// create object to add to mfiles client
+export async function createObjects(objectData) {
+  const res = await fetch(`${BASE_URL}/api/objectinstance/ObjectCreation`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify(objectData),
+  });
+
+  if (!res.ok) throw new Error("Failled to create object");
+  return await res.json();
+}
+
+//data with file uploads
+
+export async function uploadFiles(formData) {
+  const res = await fetch(`${BASE_URL}/api/objectinstance/FilesUploadAsync`, {
+    method: "POST",
+    body: formData,
+  });
+
+  if (!res.ok) throw new Error("Failled to upload Files.");
   return await res.json();
 }
