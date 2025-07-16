@@ -13,7 +13,7 @@ export async function fetchObjectTypes() {
 //class objectId
 export async function fetchObjectClasses(objectId) {
   const res = await fetch(
-    `{BASE_URL}/api/MfilesObjects/GetObjectClasses/{Objectid}`
+    `${BASE_URL}/api/MfilesObjects/GetObjectClasses/${objectId}` // Fixed: added $ and used objectId parameter
   );
   if (!res.ok)
     throw new Error("Failed to fetch classes, ensure you pick object ID");
@@ -24,6 +24,6 @@ export async function fetchClassProps(objectTypeId, classId) {
   const res = await fetch(
     `${BASE_URL}/api/MfilesObjects/ClassProps/${objectTypeId}/${classId}`
   );
-  if (!res.ok) throw new Error("Failled to fetch class properties");
+  if (!res.ok) throw new Error("Failed to fetch class properties");
   return await res.json();
 }
