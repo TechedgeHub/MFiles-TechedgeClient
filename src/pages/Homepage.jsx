@@ -14,6 +14,7 @@ import {
 import { Card, CardContent } from "@/components/ui/card";
 import { FaLocationArrow } from "react-icons/fa6";
 import { RiFileList2Line } from "react-icons/ri";
+import { NavLink } from "react-router-dom";
 
 // Reusable card component for displaying object creation steps with an icon and label
 const StepsCard = ({ icon: Icon, label, description, step }) => (
@@ -46,8 +47,11 @@ const Homepage = () => {
           </p>
 
           <div className="flex flex-col sm:flex-row gap-4 sm:justify-center">
-            <Button className="text-white text-base sm:text-lg px-6 py-4">
-              Start Creating
+            <Button
+              asChild
+              className="text-white text-base sm:text-lg px-6 py-4"
+            >
+              <NavLink to="/create"> Start Creating</NavLink>
             </Button>
             <Button className="text-white text-base sm:text-lg px-6 py-4">
               View Dashboard
