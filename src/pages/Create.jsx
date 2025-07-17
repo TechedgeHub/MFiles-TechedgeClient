@@ -22,6 +22,12 @@ const Create = () => {
     selectedClassId,
     setSelectedClassId,
     classProps,
+    formData,
+    handleInputChange,
+    handleSubmit,
+    isSubmitting,
+    submitError,
+    submitSuccess,
   } = useCascadingObjects();
 
   return (
@@ -32,13 +38,16 @@ const Create = () => {
           <h1 className="text-4xl text-primary">Create New Object</h1>
           <p>Follow the steps to create a new entry in your vault</p>
         </div>
+
         <form
-          action=""
+          onSubmit={handleSubmit}
+          // action=""
           className="w-3/4 rounded-lg shadow-sm border border-gray-200 bg-white p-4 space-y-6"
         >
           <div className="mb-5">
             <label
               htmlFor="selectobjectType"
+              id="selectobjectType"
               className="block mb-2 text-lg font-medium"
             >
               Select Object Type
@@ -98,19 +107,47 @@ const Create = () => {
               </h3>
               {classProps.map((prop) => (
                 <div key={prop.propId}>
-                  <label htmlFor="" className="block mb-1 font-medium">
+                  <label
+                    htmlFor={`prop-${prop.propId}`}
+                    id={`prop-${prop.propId}`}
+                    className="block mb-1 font-medium"
+                  >
                     {prop.title}
                     {prop.isRequired && <span className="text-red-600">*</span>}
                   </label>
-                  <input
-                    type={getInputType(prop.propertyType)}
-                    name={`prop-${prop.propId}`}
-                    required={prop.isRequired}
-                    readOnly={prop.isAutomatic}
-                    className="w-full p-2 border rounded"
-                  />
+
+                  {prop.isAutomatic ? (
+                    <input
+                      type="text"
+                      value="Automatic"
+                      readOnly
+                      className="w-full p-2 boarder rounded bg-gray-100"
+                    />
+                  ) : (
+                    <input
+                      type={getInputType(prop.propertyType)}
+                      value={formData[prop.propId] || ""}
+                      onChange={(e) =>
+                        handleInputChange(prop.propId, e.target.value)
+                      }
+                      required={prop.isRequired}
+                      className="w-full p-2 border rounded"
+                    />
+                  )}
                 </div>
               ))}
+              {/* Error and Success messages */}
+              {submitError && (
+                <div className="text-red-600 bg-red-50 p-3 rounded">
+                  Error: {submitError}
+                </div>
+              )}
+
+              {submitSuccess && (
+                <div className="text-green-600 bg-green-50 p-3 rounded">
+                  Object created successfully!
+                </div>
+              )}
             </div>
           )}
 
@@ -119,7 +156,13 @@ const Create = () => {
             <label htmlFor="submit" className="block mb-2 text-lg font-medium">
               Submit
             </label>
-            <Button>Create Object</Button>
+            <Button
+              type="submit"
+              disabled={isSubmitting || !selectedObjectType || !selectedClassId}
+            >
+              {" "}
+              {isSubmitting ? "Creating..." : "Create Object"}
+            </Button>
           </div>
         </form>
       </div>

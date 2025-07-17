@@ -44,7 +44,10 @@ export async function createObjects(objectData) {
 
 //data with file uploads
 
-export async function uploadFiles(formData) {
+export async function uploadFiles(file) {
+  const formData = new FormData();
+  formData.append("formFiles,=", file);
+
   const res = await fetch(`${BASE_URL}/api/objectinstance/FilesUploadAsync`, {
     method: "POST",
     body: formData,
@@ -53,3 +56,5 @@ export async function uploadFiles(formData) {
   if (!res.ok) throw new Error("Failled to upload Files.");
   return await res.json();
 }
+
+
