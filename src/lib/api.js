@@ -38,7 +38,22 @@ export async function createObjects(objectData) {
     body: JSON.stringify(objectData),
   });
 
-  if (!res.ok) throw new Error("Failled to create object");
+  if (!res.ok) {
+    let errorBody =`HTTP ${res.status}: ${res.statusText}`;
+    try {
+      const errorData = await res.json();
+      errorMessage =
+        errorData.message || errorData.error || JSON.stringify(errorData);
+    } catch {
+      try {
+        const errorText = await res.text();
+        errorMessage = errorText || errorMessage;
+      } catch {
+        errorBody = await res.text();
+      }
+    }
+    throw new Error(`Failed to create object: ${errorMessage}`);
+  }
   return await res.json();
 }
 
@@ -53,8 +68,8 @@ export async function uploadFiles(file) {
     body: formData,
   });
 
-  if (!res.ok) throw new Error("Failled to upload Files.");
+  if (!res.ok) {
+    throw new Error(`Failled to upload Files: ${res.status}`);
+  }
   return await res.json();
 }
-
-

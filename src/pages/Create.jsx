@@ -28,6 +28,7 @@ const Create = () => {
     isSubmitting,
     submitError,
     submitSuccess,
+    isDocumentObject,
   } = useCascadingObjects();
 
   return (
@@ -148,6 +149,24 @@ const Create = () => {
                   Object created successfully!
                 </div>
               )}
+            </div>
+          )}
+          {isDocumentObject(selectedObjectType) && (
+            <div className="mb-5">
+              <label
+                htmlFor="fileUpload"
+                className="block mb-2 text-lg font-medium"
+              >
+                Attach File <span className="text-red-600">*</span>
+              </label>
+              <input
+                type="file"
+                id="fileUpload"
+                name="fileUpload"
+                required
+                onChange={(e) => handleFileChange(e.target.files[0])}
+                className="w-full p-2 border rounded"
+              />
             </div>
           )}
 

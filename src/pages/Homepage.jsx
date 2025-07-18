@@ -53,8 +53,11 @@ const Homepage = () => {
             >
               <NavLink to="/create"> Start Creating</NavLink>
             </Button>
-            <Button className="text-white text-base sm:text-lg px-6 py-4">
-              View Dashboard
+            <Button
+              asChild
+              className="text-white text-base sm:text-lg px-6 py-4"
+            >
+              <NavLink to="/views"> View Dashboard</NavLink>
             </Button>
           </div>
 

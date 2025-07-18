@@ -3,10 +3,11 @@
 import {
   fetchObjectTypes,
   fetchObjectClasses,
+  fetchClassProps,
   createObjects,
   uploadFiles,
 } from "@/lib/api";
-import useClassProps from "./useClassProps";
+
 import { useState, useEffect } from "react";
 
 function useCascadingObjects() {
@@ -16,12 +17,7 @@ function useCascadingObjects() {
   const [classes, setClasses] = useState([]);
   const [selectedClassId, setSelectedClassId] = useState("");
 
-  // Use the separate useClassProps hook instead of local state
-  const {
-    classProps,
-    loading: propsLoading,
-    error: propsError,
-  } = useClassProps(selectedObjectType?.objectid, selectedClassId);
+  const [classProps, setClassProps] = useState([]);
 
   //form submission
   const [formData, setFormData] = useState({});
@@ -30,60 +26,14 @@ function useCascadingObjects() {
   const [submitError, setSubmitError] = useState(null);
   const [submitSuccess, setSubmitSuccess] = useState(false);
 
-  //helper
-  const getMFilesPropertyType = (propertyType) => {
-    if (!propertyType) return "MFDataTypeText";
-
-    if (
-      typeof propertyType === "string" &&
-      propertyType.startsWith("MFDatatype")
-    ) {
-      return propertyType;
-    }
-    const typeMap = {
-      1: "MFDatatypeText",
-      2: "MFDatatypeInteger",
-      3: "MFDatatypeReal",
-      4: "MFDatatypeDate",
-      5: "MFDatatypeBoolean",
-      6: "MFDatatypeLookup",
-      7: "MFDatatypeMultiSelectLookup",
-      8: "MFDatatypeTime",
-      9: "MFDatatypeTimestamp",
-      10: "MFDatatypeMultiLineText",
-
-      // Handle numeric values as well
-      1: "MFDatatypeText",
-      2: "MFDatatypeInteger",
-      3: "MFDatatypeReal",
-      4: "MFDatatypeDate",
-      5: "MFDatatypeBoolean",
-      6: "MFDatatypeLookup",
-      7: "MFDatatypeMultiSelectLookup",
-      8: "MFDatatypeTime",
-      9: "MFDatatypeTimestamp",
-      10: "MFDatatypeMultiLineText",
-
-      // Handles string names
-      text: "MFDatatypeText",
-      integer: "MFDatatypeInteger",
-      boolean: "MFDatatypeBoolean",
-      date: "MFDatatypeDate",
-      lookup: "MFDatatypeLookup",
-      multiline: "MFDatatypeMultiLineText",
-    };
-
-    return typeMap[propertyType] || "MFDatatypeText";
-  };
-
-  //getting object types from the api and display them
+  //geting object from the api and display them
   useEffect(() => {
     fetchObjectTypes()
       .then(setObjectTypes)
       .catch(() => setObjectTypes([]));
   }, []);
 
-  //from the object, fetch classes that changes dynamically based on object type
+  //from the object, fetch classes that changes dynamically based on class
   useEffect(() => {
     if (!selectedObjectType) {
       setSelectedClassId("");
@@ -99,8 +49,24 @@ function useCascadingObjects() {
       .catch(() => {
         setClasses([]);
         setSelectedClassId("");
+      })
+      .catch(() => {
+        setClasses([]);
+        setSelectedClassId("");
       });
   }, [selectedObjectType]);
+
+  //initiate fucntion to fetch objectype and classid
+  useEffect(() => {
+    if (!selectedObjectType || !selectedClassId) {
+      setClassProps([]);
+      return;
+    }
+
+    fetchClassProps(selectedObjectType.objectid, selectedClassId)
+      .then(setClassProps)
+      .catch(() => setClassProps([]));
+  }, [selectedObjectType, selectedClassId]);
 
   // input change
   const handleInputChange = (propId, value) => {
@@ -110,7 +76,7 @@ function useCascadingObjects() {
     }));
   };
 
-  // choose files
+  //   choose files
   const handleFileChange = (file) => {
     setSelectedFile(file);
   };
@@ -120,6 +86,7 @@ function useCascadingObjects() {
     if (!selectedObjectType) return false;
 
     const name = selectedObjectType.namesingular.toLowerCase();
+    // if (name.includes("document")) return true;
     return name.includes("document");
   };
 
@@ -132,7 +99,7 @@ function useCascadingObjects() {
     console.log("Selected Class ID:", selectedClassId);
     console.log("Form Data:", formData);
     console.log("Selected File:", selectedFile);
-    console.log("Class Props:", classProps);
+    console.log("Is Document Object:", isDocumentObject());
 
     setIsSubmitting(true);
     setSubmitError(null);
@@ -153,34 +120,30 @@ function useCascadingObjects() {
         console.log("File uploaded, uploadID:", uploadId);
       }
 
+      //set to convert from data to correct properties array format
+      const properties = Object.entries(formData).map(([propId, value]) => {
+        const propDef = classProps.find((prop) => prop.id === parseInt(propId));
+        return {
+          value: value,
+          propId: parseInt(propId),
+          propertyType: propDef?.datatype || "string",
+        };
+      });
+
       const objectData = {
         objectID: selectedObjectType.objectid,
         classID: parseInt(selectedClassId),
+        // mfilesCreate: "true",
         properties: Object.entries(formData).map(([propId, value]) => {
-          // Robust property lookup - try different possible field names
-          const propMeta = classProps.find((p) => {
-            const numPropId = Number(propId);
-            return (
-              p.propertyDefId === numPropId ||
-              p.id === numPropId ||
-              p.propertyDefinitionId === numPropId ||
-              p.propertyId === numPropId ||
-              p.ID === numPropId ||
-              p.propId === numPropId
-            );
-          });
-
-          console.log(`Property ${propId} lookup:`, propMeta);
-          console.log(`property ${propId} type:`, propMeta?.propertytype);
-
+          const propMeta = classProps.find(
+            (p) => p.propertyDefId === Number(propId)
+          );
           return {
             propId: Number(propId),
-            propertytype: getMFilesPropertyType(propMeta?.propertytype),
+            propertytype: String(propMeta?.propertytype ?? "1"),
             value: value,
           };
         }),
-        //  for document uploads only
-        ...(uploadId && { uploadId }),
       };
 
       console.log("Creating object with data:", objectData);
@@ -199,7 +162,6 @@ function useCascadingObjects() {
     }
   };
 
-  // Reset form when class changes
   useEffect(() => {
     setFormData({});
     setSelectedFile(null);
@@ -215,8 +177,6 @@ function useCascadingObjects() {
     selectedClassId,
     setSelectedClassId,
     classProps,
-    propsLoading,
-    propsError,
     formData,
     selectedFile,
     handleInputChange,
@@ -228,5 +188,4 @@ function useCascadingObjects() {
     isDocumentObject,
   };
 }
-
 export default useCascadingObjects;
