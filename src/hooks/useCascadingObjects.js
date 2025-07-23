@@ -1,5 +1,4 @@
 /** @format */
-
 import {
   fetchObjectTypes,
   fetchObjectClasses,
@@ -7,39 +6,38 @@ import {
   uploadFiles,
 } from "@/lib/api";
 import useClassProps from "./useClassProps";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 
 function useCascadingObjects() {
+  // State management
   const [objectTypes, setObjectTypes] = useState([]);
   const [selectedObjectType, setSelectedObjectType] = useState(null);
-
   const [classes, setClasses] = useState([]);
   const [selectedClassId, setSelectedClassId] = useState("");
+  const [formData, setFormData] = useState({});
+  const [selectedFile, setSelectedFile] = useState(null);
+  const [submissionState, setSubmissionState] = useState({
+    loading: false,
+    error: null,
+    success: false,
+  });
 
-  // Use the separate useClassProps hook instead of local state
   const {
     classProps,
     loading: propsLoading,
     error: propsError,
   } = useClassProps(selectedObjectType?.objectid, selectedClassId);
 
-  //form submission
-  const [formData, setFormData] = useState({});
-  const [selectedFile, setSelectedFile] = useState(null);
-  const [isSubmitting, setIsSubmitting] = useState(false);
-  const [submitError, setSubmitError] = useState(null);
-  const [submitSuccess, setSubmitSuccess] = useState(false);
-
-  //helper
-  const getMFilesPropertyType = (propertyType) => {
-    if (!propertyType) return "MFDataTypeText";
-
+  // Helper functions
+  const getMFilesPropertyType = useCallback((propertyType) => {
+    if (!propertyType) return "MFDatatypeText";
     if (
       typeof propertyType === "string" &&
       propertyType.startsWith("MFDatatype")
     ) {
       return propertyType;
     }
+
     const typeMap = {
       1: "MFDatatypeText",
       2: "MFDatatypeInteger",
@@ -51,20 +49,6 @@ function useCascadingObjects() {
       8: "MFDatatypeTime",
       9: "MFDatatypeTimestamp",
       10: "MFDatatypeMultiLineText",
-
-      // Handle numeric values as well
-      1: "MFDatatypeText",
-      2: "MFDatatypeInteger",
-      3: "MFDatatypeReal",
-      4: "MFDatatypeDate",
-      5: "MFDatatypeBoolean",
-      6: "MFDatatypeLookup",
-      7: "MFDatatypeMultiSelectLookup",
-      8: "MFDatatypeTime",
-      9: "MFDatatypeTimestamp",
-      10: "MFDatatypeMultiLineText",
-
-      // Handles string names
       text: "MFDatatypeText",
       integer: "MFDatatypeInteger",
       boolean: "MFDatatypeBoolean",
@@ -74,138 +58,158 @@ function useCascadingObjects() {
     };
 
     return typeMap[propertyType] || "MFDatatypeText";
-  };
-
-  //getting object types from the api and display them
-  useEffect(() => {
-    fetchObjectTypes()
-      .then(setObjectTypes)
-      .catch(() => setObjectTypes([]));
   }, []);
 
-  //from the object, fetch classes that changes dynamically based on object type
-  useEffect(() => {
-    if (!selectedObjectType) {
-      setSelectedClassId("");
-      return;
-    }
+  const isDocumentObject = useCallback((objectType) => {
+    if (!objectType) return false;
+    return objectType.namesingular.toLowerCase().includes("document");
+  }, []);
 
-    fetchObjectClasses(selectedObjectType.objectid)
-      .then((data) => {
-        const unGroupedClasses = data.unGrouped || [];
-        setClasses(unGroupedClasses);
-        setSelectedClassId("");
-      })
-      .catch(() => {
-        setClasses([]);
-        setSelectedClassId("");
-      });
-  }, [selectedObjectType]);
-
-  // input change
-  const handleInputChange = (propId, value) => {
-    setFormData((prev) => ({
-      ...prev,
-      [propId]: value,
-    }));
-  };
-
-  // choose files
-  const handleFileChange = (file) => {
-    setSelectedFile(file);
-  };
-
-  // allow only document
-  const isDocumentObject = (selectedObjectType) => {
-    if (!selectedObjectType) return false;
-
-    const name = selectedObjectType.namesingular.toLowerCase();
-    return name.includes("document");
-  };
-
-  // form submission
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-
-    console.log("Form submitted!");
-    console.log("Selected Object Type:", selectedObjectType);
-    console.log("Selected Class ID:", selectedClassId);
-    console.log("Form Data:", formData);
-    console.log("Selected File:", selectedFile);
-    console.log("Class Props:", classProps);
-
-    setIsSubmitting(true);
-    setSubmitError(null);
-    setSubmitSuccess(false);
-
-    try {
-      let uploadId = null;
-      const isDocument = isDocumentObject(selectedObjectType);
-
-      if (isDocument) {
-        if (!selectedFile) {
-          throw new Error("File is required for document objects");
-        }
-        console.log("Uploading file...");
-
-        const uploadResult = await uploadFiles(selectedFile);
-        uploadId = uploadResult.uploadID;
-        console.log("File uploaded, uploadID:", uploadId);
-      }
-
-      const objectData = {
-        objectID: selectedObjectType.objectid,
-        classID: parseInt(selectedClassId),
-        properties: Object.entries(formData).map(([propId, value]) => {
-          // Robust property lookup - try different possible field names
-          const propMeta = classProps.find((p) => {
-            const numPropId = Number(propId);
-            return (
-              p.propertyDefId === numPropId ||
-              p.id === numPropId ||
-              p.propertyDefinitionId === numPropId ||
-              p.propertyId === numPropId ||
-              p.ID === numPropId ||
-              p.propId === numPropId
-            );
-          });
-
-          console.log(`Property ${propId} lookup:`, propMeta);
-          console.log(`property ${propId} type:`, propMeta?.propertytype);
-
-          return {
-            propId: Number(propId),
-            propertytype: getMFilesPropertyType(propMeta?.propertytype),
-            value: value,
-          };
-        }),
-        //  for document uploads only
-        ...(uploadId && { uploadId }),
-      };
-
-      console.log("Creating object with data:", objectData);
-
-      const result = await createObjects(objectData);
-      console.log("Object created successfully:", result);
-
-      setSubmitSuccess(true);
-      setFormData({});
-      setSelectedFile(null);
-    } catch (error) {
-      console.error("Error creating object:", error);
-      setSubmitError(error.message);
-    } finally {
-      setIsSubmitting(false);
-    }
-  };
-
-  // Reset form when class changes
-  useEffect(() => {
+  const resetForm = useCallback(() => {
     setFormData({});
     setSelectedFile(null);
-    setSubmitError(null);
-    setSubmitSuccess(false);
-  }, [selectedClassId]);
+    setSubmissionState((prev) => ({ ...prev, error: null, success: false }));
+  }, []);
+
+  // Data fetching effects
+  useEffect(() => {
+    const loadObjectTypes = async () => {
+      try {
+        const types = await fetchObjectTypes();
+        setObjectTypes(types);
+      } catch {
+        setObjectTypes([]);
+      }
+    };
+    loadObjectTypes();
+  }, []);
+
+  useEffect(() => {
+    const loadClasses = async () => {
+      if (!selectedObjectType) {
+        setClasses([]);
+        setSelectedClassId("");
+        return;
+      }
+
+      try {
+        const data = await fetchObjectClasses(selectedObjectType.objectid);
+        setClasses(data.unGrouped || []);
+        setSelectedClassId("");
+        resetForm();
+      } catch {
+        setClasses([]);
+        setSelectedClassId("");
+        resetForm();
+      }
+    };
+    loadClasses();
+  }, [selectedObjectType, resetForm]);
+
+  // Event handlers
+  const handleInputChange = useCallback((propId, value) => {
+    setFormData((prev) => ({ ...prev, [propId]: value }));
+  }, []);
+
+  const handleFileChange = useCallback((file) => {
+    setSelectedFile(file);
+  }, []);
+
+  const handleSubmit = useCallback(
+    async (e) => {
+      e.preventDefault();
+      setSubmissionState({ loading: true, error: null, success: false });
+
+      try {
+        // Validate inputs
+        if (!selectedObjectType || !selectedClassId) {
+          throw new Error("Please select both object type and class");
+        }
+
+        const isDocument = isDocumentObject(selectedObjectType);
+        let uploadId = null;
+
+        // Handle file upload for documents
+        if (isDocument) {
+          if (!selectedFile) {
+            throw new Error("File is required for document objects");
+          }
+          const uploadResult = await uploadFiles(selectedFile);
+          uploadId = uploadResult.uploadID;
+        }
+
+        const titleProperty = {
+          value: formData.title || "Untitled Document", 
+          propId: 0,
+          propertytype: "MFDatatypeText",
+        };
+
+        // Prepare other properties
+        const otherProperties = Object.entries(formData)
+          .filter(([propId]) => propId !== "0" && propId !== "title") 
+          .filter(
+            ([_, value]) =>
+              value !== undefined && value !== null && value !== ""
+          )
+          .map(([propId, value]) => {
+            const propMeta = classProps.find((p) =>
+              [
+                p.propertyDefId,
+                p.id,
+                p.propertyDefinitionId,
+                p.propertyId,
+                p.ID,
+                p.propId,
+              ].some((id) => id === Number(propId))
+            );
+
+            return {
+              value: String(value),
+              propId: Number(propId),
+              propertytype: getMFilesPropertyType(propMeta?.propertytype),
+            };
+          });
+
+        // Combine all properties (title first)
+        const properties = [titleProperty, ...otherProperties];
+
+        console.log("Final payload:", {
+          objectID: selectedObjectType.objectid,
+          classID: parseInt(selectedClassId),
+          properties,
+          ...(uploadId && { uploadId }),
+        });
+
+        // Submit data
+        await createObjects({
+          objectID: selectedObjectType.objectid,
+          classID: parseInt(selectedClassId),
+          properties,
+          ...(uploadId && { uploadId }),
+        });
+
+        setSubmissionState({ loading: false, error: null, success: true });
+        resetForm();
+      } catch (error) {
+        console.error("Submission error:", error);
+        setSubmissionState({
+          loading: false,
+          error: error.message,
+          success: false,
+        });
+      }
+    },
+    [
+      selectedObjectType,
+      selectedClassId,
+      formData,
+      classProps,
+      selectedFile,
+      getMFilesPropertyType,
+      isDocumentObject,
+      resetForm,
+    ]
+  );
 
   return {
     objectTypes,
@@ -222,9 +226,9 @@ function useCascadingObjects() {
     handleInputChange,
     handleFileChange,
     handleSubmit,
-    isSubmitting,
-    submitError,
-    submitSuccess,
+    isSubmitting: submissionState.loading,
+    submitError: submissionState.error,
+    submitSuccess: submissionState.success,
     isDocumentObject,
   };
 }

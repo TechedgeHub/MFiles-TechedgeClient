@@ -30,38 +30,54 @@ export async function fetchClassProps(objectTypeId, classId) {
 
 // create object to add to mfiles client
 export async function createObjects(objectData) {
-  const res = await fetch(`${BASE_URL}/api/objectinstance/ObjectCreation`, {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify(objectData),
-  });
+  try {
+    const res = await fetch(`${BASE_URL}/api/objectinstance/ObjectCreation`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify(objectData),
+    });
 
-  if (!res.ok) {
-    let errorBody =`HTTP ${res.status}: ${res.statusText}`;
-    try {
-      const errorData = await res.json();
-      errorMessage =
-        errorData.message || errorData.error || JSON.stringify(errorData);
-    } catch {
+    const responseText = await res.text();
+
+    if (!res.ok) {
+      let errorMessage = `HTTP ${res.status}: ${res.statusText}`;
+
       try {
-        const errorText = await res.text();
-        errorMessage = errorText || errorMessage;
-      } catch {
-        errorBody = await res.text();
+        const errorData = JSON.parse(responseText);
+        errorMessage =
+          errorData.message || errorData.error || JSON.stringify(errorData);
+      } catch (e) {
+        errorMessage = responseText || errorMessage;
       }
+
+      console.error("API Error Details:", {
+        status: res.status,
+        statusText: res.statusText,
+        responseBody: responseText,
+        sentData: objectData,
+      });
+
+      throw new Error(`Failed to create object: ${errorMessage}`);
     }
-    throw new Error(`Failed to create object: ${errorMessage}`);
+
+    try {
+      return JSON.parse(responseText);
+    } catch (e) {
+      return responseText;
+    }
+  } catch (error) {
+    console.error("Network or parsing error:", error);
+    throw new Error(`Network error: ${error.message}`);
   }
-  return await res.json();
 }
 
 //data with file uploads
 
 export async function uploadFiles(file) {
   const formData = new FormData();
-  formData.append("formFiles,=", file);
+  formData.append("formFiles", file);
 
   const res = await fetch(`${BASE_URL}/api/objectinstance/FilesUploadAsync`, {
     method: "POST",

@@ -25,6 +25,7 @@ const Create = () => {
     formData,
     handleInputChange,
     handleSubmit,
+    handleFileChange,
     isSubmitting,
     submitError,
     submitSuccess,
