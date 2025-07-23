@@ -138,15 +138,17 @@ function useCascadingObjects() {
           uploadId = uploadResult.uploadID;
         }
 
+        // Ensure we have a title property
         const titleProperty = {
-          value: formData.title || "Untitled Document", 
+          value:
+            formData.title || selectedFile?.name || "Trial Untitled Document",
           propId: 0,
           propertytype: "MFDatatypeText",
         };
 
         // Prepare other properties
         const otherProperties = Object.entries(formData)
-          .filter(([propId]) => propId !== "0" && propId !== "title") 
+          .filter(([propId]) => propId !== "0" && propId !== "title")
           .filter(
             ([_, value]) =>
               value !== undefined && value !== null && value !== ""
@@ -169,6 +171,11 @@ function useCascadingObjects() {
               propertytype: getMFilesPropertyType(propMeta?.propertytype),
             };
           });
+        console.log("File details:", {
+          name: selectedFile.name,
+          type: selectedFile.type,
+          size: selectedFile.size,
+        });
 
         // Combine all properties (title first)
         const properties = [titleProperty, ...otherProperties];
