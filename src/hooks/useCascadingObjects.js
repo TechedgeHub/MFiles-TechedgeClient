@@ -4,6 +4,7 @@ import {
   fetchObjectClasses,
   createObjects,
   uploadFiles,
+  fetchClassMetadata,
 } from "@/lib/api";
 import useClassProps from "./useClassProps";
 import { useState, useEffect, useCallback } from "react";
@@ -17,19 +18,13 @@ function useCascadingObjects() {
   const [selectedClass, setSelectedClass] = useState(null);
   const [formData, setFormData] = useState({});
   const [selectedFile, setSelectedFile] = useState(null);
-  const [submissionState, setSubmissionState] = useState({
-    loading: false,
-    error: null,
-    success: false,
-  });
+  const [typesLoading, setTypesLoading] = useState(false);
+  const [documentMetadata, setDocumentMetadata] = useState([]);
 
-  const {
-    classProps,
-    loading: propsLoading,
-    error: propsError,
-  } = useClassProps(selectedObjectType?.objectid, selectedClassId);
-
-  // Helper functions
+  const isDocumentObject = useCallback((objectType) => {
+    if (!objectType) return false;
+    return objectType.namesingular.toLowerCase().includes("document");
+  }, []);
   const getMFilesPropertyType = useCallback((propertyType) => {
     if (!propertyType) return "MFDatatypeText";
     if (
@@ -61,11 +56,6 @@ function useCascadingObjects() {
     return typeMap[propertyType] || "MFDatatypeText";
   }, []);
 
-  const isDocumentObject = useCallback((objectType) => {
-    if (!objectType) return false;
-    return objectType.namesingular.toLowerCase().includes("document");
-  }, []);
-
   const resetForm = useCallback(() => {
     setFormData({});
     setSelectedFile(null);
@@ -84,6 +74,37 @@ function useCascadingObjects() {
     };
     loadObjectTypes();
   }, []);
+  const [submissionState, setSubmissionState] = useState({
+    loading: false,
+    error: null,
+    success: false,
+  });
+
+  const {
+    classProps,
+    loading: propsLoading,
+    error: propsError,
+  } = useClassProps(selectedObjectType?.objectid, selectedClassId);
+
+  useEffect(() => {
+    const fetchMetadata = async () => {
+      if (selectedClassId && selectedObjectType) {
+        try {
+          const metadata = await fetchClassMetadata(
+            selectedObjectType.objectid,
+            selectedClassId
+          );
+          setDocumentMetadata(metadata);
+        } catch (error) {
+          console.error("Failed to fetch metadata:", error);
+          setDocumentMetadata([]);
+        }
+      }
+    };
+    fetchMetadata();
+  }, [selectedClassId, selectedObjectType?.objectid]);
+
+  // Helper functions
 
   useEffect(() => {
     const loadClasses = async () => {
@@ -95,9 +116,24 @@ function useCascadingObjects() {
 
       try {
         const data = await fetchObjectClasses(selectedObjectType.objectid);
-        setClasses(data.unGrouped || []);
-        setSelectedClassId("");
-        resetForm();
+
+        const allClasses = [
+          ...(data.unGrouped || []),
+          ...(data.grouped?.flatMap((group) => group.members) || []),
+        ];
+
+        setClasses(allClasses);
+        if (isDocumentObject(selectedObjectType)) {
+          const documentClass = allClasses.find((c) =>
+            c.className.toLowerCase().includes("document")
+          );
+          if (documentClass) {
+            setSelectedClassId(documentClass.classId.toString());
+          } else {
+            setSelectedClassId("");
+          }
+          resetForm();
+        }
       } catch {
         setClasses([]);
         setSelectedClassId("");
@@ -142,7 +178,7 @@ function useCascadingObjects() {
         // Get default title based on object type
         const getDefaultTitle = () => {
           if (isDocument) {
-            return selectedFile?.name || "Untitled Document";
+            return selectedFile?.name || "No Document--error";
           }
           return (
             formData.title || selectedObjectType?.namesingular || "New Object"
@@ -253,6 +289,8 @@ function useCascadingObjects() {
     submitError: submissionState.error,
     submitSuccess: submissionState.success,
     isDocumentObject,
+    typesLoading,
+    metadata: documentMetadata,
   };
 }
 

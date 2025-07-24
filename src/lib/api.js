@@ -89,9 +89,10 @@ export async function uploadFiles(file) {
   }
   return await res.json();
 }
-// Add this function to your API file
-export const fetchDocumentMetadata = async (classId) => {
-  const response = await fetch(`/api/document-metadata/${classId}`);
-  if (!response.ok) throw new Error('Failed to fetch document metadata');
+export const fetchClassMetadata = async (objectId, classId) => {
+  const response = await fetch(
+    `https://mfilesdemoapi.alignsys.tech/api/MfilesObjects/ClassProps/${objectId}/${classId}`
+  );
+  if (!response.ok) throw new Error("Failed to fetch class metadata");
   return response.json();
 };
