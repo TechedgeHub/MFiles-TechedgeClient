@@ -139,10 +139,19 @@ function useCascadingObjects() {
           uploadId = uploadResult.uploadID;
         }
 
+        // Get default title based on object type
+        const getDefaultTitle = () => {
+          if (isDocument) {
+            return selectedFile?.name || "Untitled Document";
+          }
+          return (
+            formData.title || selectedObjectType?.namesingular || "New Object"
+          );
+        };
+
         // Ensure we have a title property
         const titleProperty = {
-          value:
-            formData.title || selectedFile?.name || "Trial Untitled Document",
+          value: getDefaultTitle(),
           propId: 0,
           propertytype: "MFDatatypeText",
         };
@@ -172,11 +181,15 @@ function useCascadingObjects() {
               propertytype: getMFilesPropertyType(propMeta?.propertytype),
             };
           });
-        console.log("File details:", {
-          name: selectedFile.name,
-          type: selectedFile.type,
-          size: selectedFile.size,
-        });
+
+        // Only log file details if it's a document with a file
+        if (isDocument && selectedFile) {
+          console.log("File details:", {
+            name: selectedFile.name,
+            type: selectedFile.type,
+            size: selectedFile.size,
+          });
+        }
 
         // Combine all properties (title first)
         const properties = [titleProperty, ...otherProperties];
@@ -202,7 +215,9 @@ function useCascadingObjects() {
         console.error("Submission error:", error);
         setSubmissionState({
           loading: false,
-          error: error.message,
+          error: error.message.includes("name")
+            ? "Please provide all required information"
+            : error.message,
           success: false,
         });
       }

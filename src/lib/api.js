@@ -89,3 +89,9 @@ export async function uploadFiles(file) {
   }
   return await res.json();
 }
+// Add this function to your API file
+export const fetchDocumentMetadata = async (classId) => {
+  const response = await fetch(`/api/document-metadata/${classId}`);
+  if (!response.ok) throw new Error('Failed to fetch document metadata');
+  return response.json();
+};

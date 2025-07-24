@@ -74,30 +74,6 @@ const Create = () => {
             </Select>
           </div>
 
-          {/* sellect class */}
-          {/* <div className="mb-5">
-            <label
-              htmlFor="selectClass"
-              className="block mb-2 text-lg font-medium "
-            >
-              Choose Class
-            </label>
-            <Select
-              onValueChange={(val) => setSelectedClassId(val)}
-              value={selectedClassId}
-            >
-              <SelectTrigger className="w-full">
-                <SelectValue placeholder="Class A" />
-              </SelectTrigger>
-              <SelectContent>
-                {classes.map((cls) => (
-                  <SelectItem key={cls.classId} value={cls.classId}>
-                    {cls.className}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div> */}
           <div className="mb-5">
             <label
               htmlFor="selectClass"
@@ -108,8 +84,8 @@ const Create = () => {
             <Select
               onValueChange={(val) => {
                 const parsed = JSON.parse(val);
-                setSelectedClass(parsed); // Store the whole class object
-                setSelectedClassId(parsed.classId); // Also update the original state for compatibility
+                setSelectedClass(parsed);
+                setSelectedClassId(parsed.classId);
               }}
               value={selectedClass ? JSON.stringify(selectedClass) : ""}
             >
