@@ -14,6 +14,7 @@ function useCascadingObjects() {
   const [selectedObjectType, setSelectedObjectType] = useState(null);
   const [classes, setClasses] = useState([]);
   const [selectedClassId, setSelectedClassId] = useState("");
+  const [selectedClass, setSelectedClass] = useState(null);
   const [formData, setFormData] = useState({});
   const [selectedFile, setSelectedFile] = useState(null);
   const [submissionState, setSubmissionState] = useState({

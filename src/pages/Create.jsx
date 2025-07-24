@@ -25,13 +25,11 @@ const Create = () => {
     formData,
     handleInputChange,
     handleSubmit,
-    handleFileChange,
     isSubmitting,
     submitError,
     submitSuccess,
-    isDocumentObject,
   } = useCascadingObjects();
-
+  const [selectedClass, setSelectedClass] = useState(null);
   return (
     <>
       <Navbar />
@@ -77,7 +75,7 @@ const Create = () => {
           </div>
 
           {/* sellect class */}
-          <div className="mb-5">
+          {/* <div className="mb-5">
             <label
               htmlFor="selectClass"
               className="block mb-2 text-lg font-medium "
@@ -94,6 +92,33 @@ const Create = () => {
               <SelectContent>
                 {classes.map((cls) => (
                   <SelectItem key={cls.classId} value={cls.classId}>
+                    {cls.className}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div> */}
+          <div className="mb-5">
+            <label
+              htmlFor="selectClass"
+              className="block mb-2 text-lg font-medium "
+            >
+              Choose Class
+            </label>
+            <Select
+              onValueChange={(val) => {
+                const parsed = JSON.parse(val);
+                setSelectedClass(parsed); // Store the whole class object
+                setSelectedClassId(parsed.classId); // Also update the original state for compatibility
+              }}
+              value={selectedClass ? JSON.stringify(selectedClass) : ""}
+            >
+              <SelectTrigger className="w-full">
+                <SelectValue placeholder="Class A" />
+              </SelectTrigger>
+              <SelectContent>
+                {classes.map((cls) => (
+                  <SelectItem key={cls.classId} value={JSON.stringify(cls)}>
                     {cls.className}
                   </SelectItem>
                 ))}
@@ -150,24 +175,6 @@ const Create = () => {
                   Object created successfully!
                 </div>
               )}
-            </div>
-          )}
-          {isDocumentObject(selectedObjectType) && (
-            <div className="mb-5">
-              <label
-                htmlFor="fileUpload"
-                className="block mb-2 text-lg font-medium"
-              >
-                Attach File <span className="text-red-600">*</span>
-              </label>
-              <input
-                type="file"
-                id="fileUpload"
-                name="fileUpload"
-                required
-                onChange={(e) => handleFileChange(e.target.files[0])}
-                className="w-full p-2 border rounded"
-              />
             </div>
           )}
 
