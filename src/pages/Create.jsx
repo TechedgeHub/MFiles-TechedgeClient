@@ -132,7 +132,7 @@ const Create = () => {
               <h3 className="block mb-2 text-lg font-medium">
                 {isDocumentObject(selectedObjectType)
                   ? "Document Metadata"
-                  : "Object Properties"}
+                  : `${selectedObjectType?.namesingular} Properties`}
               </h3>
 
               {allProperties.map((prop) => (

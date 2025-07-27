@@ -21,6 +21,7 @@ function useCascadingObjects() {
   const [selectedFile, setSelectedFile] = useState(null);
   const [typesLoading, setTypesLoading] = useState(false);
   const [documentMetadata, setDocumentMetadata] = useState([]);
+  const [metadataLoading, setMetadataLoading] = useState(false);
   const [submissionState, setSubmissionState] = useState({
     loading: false,
     error: null,
@@ -72,10 +73,12 @@ function useCascadingObjects() {
 
   // Combined properties for the form
   const allProperties = useMemo(() => {
-    return [
+    const combined = [
       ...(classProps || []),
       ...(isDocumentObject(selectedObjectType) ? documentMetadata || [] : []),
-    ].filter(
+    ];
+
+    return combined.filter(
       (prop, index, self) =>
         index ===
         self.findIndex(
@@ -229,9 +232,17 @@ function useCascadingObjects() {
         else if (isDocument) {
           finalTitle = selectedFile?.name || "Untitled Document";
         }
-        // 3. Fallback to object type name
+        // 3. For non-documents, look for name fields
         else {
-          finalTitle = selectedObjectType?.namesingular || "New Object";
+          const nameProp = allProperties.find(
+            (p) =>
+              p.title?.toLowerCase().includes("name") ||
+              p.name?.toLowerCase().includes("name")
+          );
+          finalTitle =
+            nameProp && formData[nameProp.propId]
+              ? String(formData[nameProp.propId])
+              : selectedObjectType?.namesingular || "New Object";
         }
 
         // Remove any existing title properties to prevent duplicates
