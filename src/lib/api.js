@@ -36,40 +36,31 @@ export async function createObjects(objectData) {
       headers: {
         "Content-Type": "application/json",
       },
-      body: JSON.stringify(objectData),
+      body: JSON.stringify(objectData, (key, value) => {
+        // Convert empty strings to null for M-Files
+        if (value === "") return null;
+        return value;
+      }),
     });
 
-    const responseText = await res.text();
-
     if (!res.ok) {
+      const errorText = await res.text();
       let errorMessage = `HTTP ${res.status}: ${res.statusText}`;
 
       try {
-        const errorData = JSON.parse(responseText);
-        errorMessage =
-          errorData.message || errorData.error || JSON.stringify(errorData);
-      } catch (e) {
-        errorMessage = responseText || errorMessage;
+        const errorData = JSON.parse(errorText);
+        errorMessage = errorData.message || errorData.title || errorText;
+      } catch {
+        errorMessage = errorText;
       }
 
-      console.error("API Error Details:", {
-        status: res.status,
-        statusText: res.statusText,
-        responseBody: responseText,
-        sentData: objectData,
-      });
-
-      throw new Error(`Failed to create object: ${errorMessage}`);
+      throw new Error(errorMessage);
     }
 
-    try {
-      return JSON.parse(responseText);
-    } catch (e) {
-      return responseText;
-    }
+    return await res.json();
   } catch (error) {
-    console.error("Network or parsing error:", error);
-    throw new Error(`Network error: ${error.message}`);
+    console.error("API Error:", error);
+    throw error;
   }
 }
 

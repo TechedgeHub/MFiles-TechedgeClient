@@ -28,29 +28,18 @@ const Create = () => {
     isSubmitting,
     submitError,
     submitSuccess,
-    documentMetadata,
-    metadataLoading,
-    propsLoading,
     isDocumentObject,
+    metadataLoading,
+    allProperties,
   } = useCascadingObjects();
   const [selectedClass, setSelectedClass] = useState(null);
 
-  const allProperties = [
-    ...(classProps || []),
-    ...(isDocumentObject(selectedObjectType) ? documentMetadata || [] : []),
-  ].filter(
-    (prop, index, self) =>
-      index ===
-      self.findIndex(
-        (p) =>
-          p.propId === prop.propId ||
-          p.propertyDefId === prop.propertyDefId ||
-          p.id === prop.id
-      )
-  );
-
-  if (metadataLoading || propsLoading) {
-    return <div>Loading metadata...</div>;
+  if (metadataLoading) {
+    return (
+      <div className="flex justify-center items-center h-screen">
+        Loading metadata...
+      </div>
+    );
   }
 
   return (
@@ -68,10 +57,7 @@ const Create = () => {
         >
           {/* Object Type Selector */}
           <div className="mb-5">
-            <label
-              htmlFor="selectobjectType"
-              className="block mb-2 text-lg font-medium"
-            >
+            <label className="block mb-2 text-lg font-medium">
               Select Object Type
             </label>
             <Select
@@ -95,13 +81,9 @@ const Create = () => {
               </SelectContent>
             </Select>
           </div>
-
           {/* Class Selector */}
           <div className="mb-5">
-            <label
-              htmlFor="selectClass"
-              className="block mb-2 text-lg font-medium"
-            >
+            <label className="block mb-2 text-lg font-medium">
               Choose Class
             </label>
             <Select
@@ -126,83 +108,57 @@ const Create = () => {
             </Select>
           </div>
 
-          {/* Properties Form */}
-          {allProperties.length > 0 ? (
-            <div className="space-y-4">
-              <h3 className="block mb-2 text-lg font-medium">
-                {isDocumentObject(selectedObjectType)
-                  ? "Document Metadata"
-                  : `${selectedObjectType?.namesingular} Properties`}
-              </h3>
-
-              {allProperties.map((prop) => (
-                <div key={prop.propId} className="mb-4">
-                  <label
-                    htmlFor={`prop-${prop.propId}`}
-                    className="block mb-1 font-medium"
-                  >
-                    {prop.title || prop.name}
-                    {prop.isRequired && <span className="text-red-600">*</span>}
-                  </label>
-
-                  {prop.isAutomatic ? (
-                    <input
-                      type="text"
-                      value="Automatic"
-                      readOnly
-                      className="w-full p-2 border rounded bg-gray-100"
-                    />
-                  ) : (
-                    <input
-                      type={getInputType(prop.propertyType)}
-                      value={formData[prop.propId] || ""}
-                      onChange={(e) =>
-                        handleInputChange(prop.propId, e.target.value)
-                      }
-                      required={prop.isRequired}
-                      className="w-full p-2 border rounded"
-                    />
-                  )}
-                </div>
-              ))}
-
-              {/* File Upload for Documents */}
-              {isDocumentObject(selectedObjectType) && (
-                <div className="mb-4">
-                  <label className="block mb-1 font-medium">
-                    Document File
-                    <span className="text-red-600">*</span>
-                  </label>
-                  <input
-                    type="file"
-                    onChange={(e) => handleFileChange(e.target.files[0])}
-                    className="w-full p-2 border rounded"
-                    required={isDocumentObject(selectedObjectType)}
-                  />
-                </div>
+          {allProperties.map((prop) => (
+            <div key={prop.propId} className="mb-4">
+              <label className="block mb-1 font-medium">
+                {prop.title || prop.name}
+                {prop.isRequired && <span className="text-red-600">*</span>}
+              </label>
+              {prop.isAutomatic ? (
+                <input
+                  type="text"
+                  value="Automatic"
+                  readOnly
+                  className="w-full p-2 border rounded bg-gray-100"
+                />
+              ) : (
+                <input
+                  type={getInputType(prop.propertyType)}
+                  value={formData[prop.propId] || ""}
+                  onChange={(e) =>
+                    handleInputChange(prop.propId, e.target.value)
+                  }
+                  required={prop.isRequired}
+                  className="w-full p-2 border rounded"
+                />
               )}
             </div>
-          ) : (
-            !propsLoading && (
-              <div className="text-gray-500 p-4 text-center">
-                No properties available for this class
-              </div>
-            )
+          ))}
+          {isDocumentObject(selectedObjectType) && (
+            <div className="mb-4">
+              <label className="block mb-1 font-medium">
+                Document File
+                <span className="text-red-600">*</span>
+              </label>
+              <input
+                type="file"
+                onChange={(e) => handleFileChange(e.target.files[0])}
+                className="w-full p-2 border rounded"
+                required
+              />
+            </div>
           )}
-
           {/* Status Messages */}
           {submitError && (
             <div className="text-red-600 bg-red-50 p-3 rounded">
               Error: {submitError}
             </div>
           )}
-
           {submitSuccess && (
             <div className="text-green-600 bg-green-50 p-3 rounded">
               Object created successfully!
             </div>
           )}
-
           {/* Submit Button */}
           <div className="mb-5">
             <Button
@@ -266,22 +222,8 @@ export default Create;
 //     isSubmitting,
 //     submitError,
 //     submitSuccess,
-//     documentMetadata,
-//     metadataLoading,
 //   } = useCascadingObjects();
 //   const [selectedClass, setSelectedClass] = useState(null);
-
-//   const allProperties = [
-//     ...(classProps || []),
-//     ...(documentMetadata || []),
-//   ].filter(
-//     (prop, index, self) =>
-//       index === self.findIndex((p) => p.propId === prop.propId)
-//   );
-
-//   if (metadataLoading) {
-//     return <div>Loading metadata...</div>;
-//   }
 
 //   return (
 //     <>
@@ -327,6 +269,7 @@ export default Create;
 //             </Select>
 //           </div>
 
+//           {/* sellect class */}
 //           <div className="mb-5">
 //             <label
 //               htmlFor="selectClass"
@@ -338,12 +281,13 @@ export default Create;
 //               onValueChange={(val) => {
 //                 const parsed = JSON.parse(val);
 //                 setSelectedClass(parsed);
-//                 setSelectedClassId(parsed.classId.toString);
+//                 setSelectedClassId(parsed.classId.toString());
 //               }}
 //               value={selectedClass ? JSON.stringify(selectedClass) : ""}
+//               disabled={!selectedObjectType}
 //             >
 //               <SelectTrigger className="w-full">
-//                 <SelectValue placeholder="Class A" />
+//                 <SelectValue placeholder="Select class" />
 //               </SelectTrigger>
 //               <SelectContent>
 //                 {classes.map((cls) => (
@@ -362,13 +306,13 @@ export default Create;
 //                 Fill Metadata Form
 //               </h3>
 //               {classProps.map((prop) => (
-//                 <div key={prop.propId} className="mb-4">
+//                 <div key={prop.propId}>
 //                   <label
 //                     htmlFor={`prop-${prop.propId}`}
 //                     id={`prop-${prop.propId}`}
 //                     className="block mb-1 font-medium"
 //                   >
-//                     {prop.title || prop.name}
+//                     {prop.title}
 //                     {prop.isRequired && <span className="text-red-600">*</span>}
 //                   </label>
 
