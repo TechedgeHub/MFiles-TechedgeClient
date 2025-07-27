@@ -8,10 +8,9 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-
 import useCascadingObjects from "@/hooks/useCascadingObjects";
 import Navbar from "@/layout/Navbar";
-import React, { useState, useEffect } from "react";
+import React, { useState } from "react";
 
 const Create = () => {
   const {
@@ -24,12 +23,36 @@ const Create = () => {
     classProps,
     formData,
     handleInputChange,
+    handleFileChange,
     handleSubmit,
     isSubmitting,
     submitError,
     submitSuccess,
+    documentMetadata,
+    metadataLoading,
+    propsLoading,
+    isDocumentObject,
   } = useCascadingObjects();
   const [selectedClass, setSelectedClass] = useState(null);
+
+  const allProperties = [
+    ...(classProps || []),
+    ...(isDocumentObject(selectedObjectType) ? documentMetadata || [] : []),
+  ].filter(
+    (prop, index, self) =>
+      index ===
+      self.findIndex(
+        (p) =>
+          p.propId === prop.propId ||
+          p.propertyDefId === prop.propertyDefId ||
+          p.id === prop.id
+      )
+  );
+
+  if (metadataLoading || propsLoading) {
+    return <div>Loading metadata...</div>;
+  }
+
   return (
     <>
       <Navbar />
@@ -41,13 +64,12 @@ const Create = () => {
 
         <form
           onSubmit={handleSubmit}
-          // action=""
           className="w-3/4 rounded-lg shadow-sm border border-gray-200 bg-white p-4 space-y-6"
         >
+          {/* Object Type Selector */}
           <div className="mb-5">
             <label
               htmlFor="selectobjectType"
-              id="selectobjectType"
               className="block mb-2 text-lg font-medium"
             >
               Select Object Type
@@ -62,7 +84,7 @@ const Create = () => {
               }
             >
               <SelectTrigger className="w-full">
-                <SelectValue placeholder="Student" />
+                <SelectValue placeholder="Select object type" />
               </SelectTrigger>
               <SelectContent>
                 {objectTypes.map((item) => (
@@ -74,10 +96,11 @@ const Create = () => {
             </Select>
           </div>
 
+          {/* Class Selector */}
           <div className="mb-5">
             <label
               htmlFor="selectClass"
-              className="block mb-2 text-lg font-medium "
+              className="block mb-2 text-lg font-medium"
             >
               Choose Class
             </label>
@@ -85,12 +108,13 @@ const Create = () => {
               onValueChange={(val) => {
                 const parsed = JSON.parse(val);
                 setSelectedClass(parsed);
-                setSelectedClassId(parsed.classId);
+                setSelectedClassId(parsed.classId.toString());
               }}
               value={selectedClass ? JSON.stringify(selectedClass) : ""}
+              disabled={!selectedObjectType}
             >
               <SelectTrigger className="w-full">
-                <SelectValue placeholder="Class A" />
+                <SelectValue placeholder="Select class" />
               </SelectTrigger>
               <SelectContent>
                 {classes.map((cls) => (
@@ -102,20 +126,22 @@ const Create = () => {
             </Select>
           </div>
 
-          {/* class properties */}
-          {classProps.length > 0 && (
+          {/* Properties Form */}
+          {allProperties.length > 0 ? (
             <div className="space-y-4">
               <h3 className="block mb-2 text-lg font-medium">
-                Fill Metadata Form
+                {isDocumentObject(selectedObjectType)
+                  ? "Document Metadata"
+                  : "Object Properties"}
               </h3>
-              {classProps.map((prop) => (
-                <div key={prop.propId}>
+
+              {allProperties.map((prop) => (
+                <div key={prop.propId} className="mb-4">
                   <label
                     htmlFor={`prop-${prop.propId}`}
-                    id={`prop-${prop.propId}`}
                     className="block mb-1 font-medium"
                   >
-                    {prop.title}
+                    {prop.title || prop.name}
                     {prop.isRequired && <span className="text-red-600">*</span>}
                   </label>
 
@@ -124,7 +150,7 @@ const Create = () => {
                       type="text"
                       value="Automatic"
                       readOnly
-                      className="w-full p-2 boarder rounded bg-gray-100"
+                      className="w-full p-2 border rounded bg-gray-100"
                     />
                   ) : (
                     <input
@@ -139,31 +165,51 @@ const Create = () => {
                   )}
                 </div>
               ))}
-              {/* Error and Success messages */}
-              {submitError && (
-                <div className="text-red-600 bg-red-50 p-3 rounded">
-                  Error: {submitError}
-                </div>
-              )}
 
-              {submitSuccess && (
-                <div className="text-green-600 bg-green-50 p-3 rounded">
-                  Object created successfully!
+              {/* File Upload for Documents */}
+              {isDocumentObject(selectedObjectType) && (
+                <div className="mb-4">
+                  <label className="block mb-1 font-medium">
+                    Document File
+                    <span className="text-red-600">*</span>
+                  </label>
+                  <input
+                    type="file"
+                    onChange={(e) => handleFileChange(e.target.files[0])}
+                    className="w-full p-2 border rounded"
+                    required={isDocumentObject(selectedObjectType)}
+                  />
                 </div>
               )}
             </div>
+          ) : (
+            !propsLoading && (
+              <div className="text-gray-500 p-4 text-center">
+                No properties available for this class
+              </div>
+            )
           )}
 
-          {/* submit button */}
+          {/* Status Messages */}
+          {submitError && (
+            <div className="text-red-600 bg-red-50 p-3 rounded">
+              Error: {submitError}
+            </div>
+          )}
+
+          {submitSuccess && (
+            <div className="text-green-600 bg-green-50 p-3 rounded">
+              Object created successfully!
+            </div>
+          )}
+
+          {/* Submit Button */}
           <div className="mb-5">
-            <label htmlFor="submit" className="block mb-2 text-lg font-medium">
-              Submit
-            </label>
             <Button
               type="submit"
               disabled={isSubmitting || !selectedObjectType || !selectedClassId}
+              className="w-full"
             >
-              {" "}
               {isSubmitting ? "Creating..." : "Create Object"}
             </Button>
           </div>
@@ -187,4 +233,211 @@ function getInputType(type) {
       return "text";
   }
 }
+
 export default Create;
+
+// /** @format */
+
+// import { Button } from "@/components/ui/button";
+// import {
+//   Select,
+//   SelectContent,
+//   SelectItem,
+//   SelectTrigger,
+//   SelectValue,
+// } from "@/components/ui/select";
+
+// import useCascadingObjects from "@/hooks/useCascadingObjects";
+// import Navbar from "@/layout/Navbar";
+// import React, { useState, useEffect } from "react";
+
+// const Create = () => {
+//   const {
+//     objectTypes,
+//     selectedObjectType,
+//     setSelectedObjectType,
+//     classes,
+//     selectedClassId,
+//     setSelectedClassId,
+//     classProps,
+//     formData,
+//     handleInputChange,
+//     handleSubmit,
+//     isSubmitting,
+//     submitError,
+//     submitSuccess,
+//     documentMetadata,
+//     metadataLoading,
+//   } = useCascadingObjects();
+//   const [selectedClass, setSelectedClass] = useState(null);
+
+//   const allProperties = [
+//     ...(classProps || []),
+//     ...(documentMetadata || []),
+//   ].filter(
+//     (prop, index, self) =>
+//       index === self.findIndex((p) => p.propId === prop.propId)
+//   );
+
+//   if (metadataLoading) {
+//     return <div>Loading metadata...</div>;
+//   }
+
+//   return (
+//     <>
+//       <Navbar />
+//       <div className="flex flex-col gap-5 justify-center mt-10 items-center">
+//         <div className="flex flex-col gap-2 text-center">
+//           <h1 className="text-4xl text-primary">Create New Object</h1>
+//           <p>Follow the steps to create a new entry in your vault</p>
+//         </div>
+
+//         <form
+//           onSubmit={handleSubmit}
+//           // action=""
+//           className="w-3/4 rounded-lg shadow-sm border border-gray-200 bg-white p-4 space-y-6"
+//         >
+//           <div className="mb-5">
+//             <label
+//               htmlFor="selectobjectType"
+//               id="selectobjectType"
+//               className="block mb-2 text-lg font-medium"
+//             >
+//               Select Object Type
+//             </label>
+//             <Select
+//               onValueChange={(val) => {
+//                 const parsed = JSON.parse(val);
+//                 setSelectedObjectType(parsed);
+//               }}
+//               value={
+//                 selectedObjectType ? JSON.stringify(selectedObjectType) : ""
+//               }
+//             >
+//               <SelectTrigger className="w-full">
+//                 <SelectValue placeholder="Student" />
+//               </SelectTrigger>
+//               <SelectContent>
+//                 {objectTypes.map((item) => (
+//                   <SelectItem key={item.objectid} value={JSON.stringify(item)}>
+//                     {item.namesingular}
+//                   </SelectItem>
+//                 ))}
+//               </SelectContent>
+//             </Select>
+//           </div>
+
+//           <div className="mb-5">
+//             <label
+//               htmlFor="selectClass"
+//               className="block mb-2 text-lg font-medium "
+//             >
+//               Choose Class
+//             </label>
+//             <Select
+//               onValueChange={(val) => {
+//                 const parsed = JSON.parse(val);
+//                 setSelectedClass(parsed);
+//                 setSelectedClassId(parsed.classId.toString);
+//               }}
+//               value={selectedClass ? JSON.stringify(selectedClass) : ""}
+//             >
+//               <SelectTrigger className="w-full">
+//                 <SelectValue placeholder="Class A" />
+//               </SelectTrigger>
+//               <SelectContent>
+//                 {classes.map((cls) => (
+//                   <SelectItem key={cls.classId} value={JSON.stringify(cls)}>
+//                     {cls.className}
+//                   </SelectItem>
+//                 ))}
+//               </SelectContent>
+//             </Select>
+//           </div>
+
+//           {/* class properties */}
+//           {classProps.length > 0 && (
+//             <div className="space-y-4">
+//               <h3 className="block mb-2 text-lg font-medium">
+//                 Fill Metadata Form
+//               </h3>
+//               {classProps.map((prop) => (
+//                 <div key={prop.propId} className="mb-4">
+//                   <label
+//                     htmlFor={`prop-${prop.propId}`}
+//                     id={`prop-${prop.propId}`}
+//                     className="block mb-1 font-medium"
+//                   >
+//                     {prop.title || prop.name}
+//                     {prop.isRequired && <span className="text-red-600">*</span>}
+//                   </label>
+
+//                   {prop.isAutomatic ? (
+//                     <input
+//                       type="text"
+//                       value="Automatic"
+//                       readOnly
+//                       className="w-full p-2 boarder rounded bg-gray-100"
+//                     />
+//                   ) : (
+//                     <input
+//                       type={getInputType(prop.propertyType)}
+//                       value={formData[prop.propId] || ""}
+//                       onChange={(e) =>
+//                         handleInputChange(prop.propId, e.target.value)
+//                       }
+//                       required={prop.isRequired}
+//                       className="w-full p-2 border rounded"
+//                     />
+//                   )}
+//                 </div>
+//               ))}
+//               {/* Error and Success messages */}
+//               {submitError && (
+//                 <div className="text-red-600 bg-red-50 p-3 rounded">
+//                   Error: {submitError}
+//                 </div>
+//               )}
+
+//               {submitSuccess && (
+//                 <div className="text-green-600 bg-green-50 p-3 rounded">
+//                   Object created successfully!
+//                 </div>
+//               )}
+//             </div>
+//           )}
+
+//           {/* submit button */}
+//           <div className="mb-5">
+//             <label htmlFor="submit" className="block mb-2 text-lg font-medium">
+//               Submit
+//             </label>
+//             <Button
+//               type="submit"
+//               disabled={isSubmitting || !selectedObjectType || !selectedClassId}
+//             >
+//               {" "}
+//               {isSubmitting ? "Creating..." : "Create Object"}
+//             </Button>
+//           </div>
+//         </form>
+//       </div>
+//     </>
+//   );
+// };
+
+// function getInputType(type) {
+//   switch (type) {
+//     case "MFDatatypeText":
+//       return "text";
+//     case "MFDatatypeInteger":
+//       return "number";
+//     case "MFDatatypeDate":
+//       return "date";
+//     case "MFDatatypeTimestamp":
+//       return "datetime-local";
+//     default:
+//       return "text";
+//   }
+// }
+// export default Create;
