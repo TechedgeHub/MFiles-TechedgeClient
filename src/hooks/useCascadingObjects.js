@@ -310,42 +310,58 @@ function useCascadingObjects() {
         // Prepare properties from form data
         const currentProps = isDocument ? allProperties : classProps || [];
 
-        const properties = currentProps.map((prop) => {
-          let value = formData[prop.propId];
+        const properties = allProperties
+          .filter((prop) => !prop.isHidden && !prop.isAutomatic) // Skip hidden/auto props
+          .map((prop) => {
+            let value = formData[prop.propId];
 
-          // Format value based on type
-          switch (prop.propertytype) {
-            case "MFDatatypeLookup":
-              value = value?.id ? { id: value.id } : null;
-              break;
-            case "MFDatatypeMultiSelectLookup":
-              value = Array.isArray(value) ? value : [];
-              break;
-            case "MFDatatypeDate":
-              value = value
-                ? new Date(value).toISOString().split("T")[0]
-                : null;
-              break;
-            case "MFDatatypeBoolean":
+            // Special formatting
+            if (prop.propertytype === "MFDatatypeDate" && value) {
+              value = new Date(value).toISOString().split("T")[0];
+            } else if (prop.propertytype === "MFDatatypeTimestamp" && value) {
+              value = new Date(value).toISOString();
+            } else if (prop.propertytype === "MFDatatypeInteger" && value) {
+              value = parseInt(value);
+            } else if (prop.propertytype === "MFDatatypeBoolean") {
               value = Boolean(value);
-              break;
-            default:
-              value =
-                value !== null && value !== undefined ? String(value) : null;
-          }
+            }
 
-          return {
-            propId: prop.propId,
-            propertytype: getMFilesPropertyTypeRef.current(prop.propertytype),
-            value,
-          };
-        });
+            return {
+              propId: prop.propId,
+              propertytype: prop.propertytype,
+              value: value !== undefined ? value : null,
+            };
+          });
+
+        // Verify required fields are present
+        const missingRequired = allProperties.filter(
+          (prop) => prop.isRequired && !formData[prop.propId]
+        );
+
+        if (missingRequired.length > 0) {
+          throw new Error(
+            `Missing required fields: ${missingRequired
+              .map((p) => p.title)
+              .join(", ")}`
+          );
+        }
+
+        console.log("Properties array structure:", properties);
+        console.log(
+          "Properties detailed:",
+          JSON.stringify(properties, null, 2)
+        );
 
         const payload = {
-          objectID: selectedObjectType.objectid,
-          classID: parseInt(selectedClassId),
-          properties: properties,
-          ...(uploadId && { uploadId }),
+          objectId: selectedObjectType.objectid,
+          classId: parseInt(selectedClassId),
+          properties: properties.map((property) => ({
+            propId: property.propId,
+            value: String(property.value), // Convert ALL values to strings
+            propertytype: property.propertytype,
+          })),
+          mfilesCreate: true, // or some required value
+          ...(isDocumentObject(selectedObjectType) && { uploadId }),
         };
 
         console.log("Final payload:", payload);

@@ -32,6 +32,8 @@ export async function fetchClassProps(objectTypeId, classId) {
 // create new object to add to mfiles client
 export async function createObjects(objectData) {
   try {
+    console.log("Sending payload:", JSON.stringify(objectData, null, 2)); // Better formatting
+
     const res = await fetch(`${BASE_URL}/api/objectinstance/ObjectCreation`, {
       method: "POST",
       headers: {
@@ -45,16 +47,27 @@ export async function createObjects(objectData) {
 
     if (!res.ok) {
       const errorText = await res.text();
-      let errorMessage = `HTTP ${res.status}: ${res.statusText}`;
+      console.error("Full API Error Response:", errorText); // THIS IS KEY
+      console.error("Status:", res.status);
+      console.error("Status Text:", res.statusText);
 
+      // Try to parse the error for more details
       try {
         const errorData = JSON.parse(errorText);
-        errorMessage = errorData.message || errorData.title || errorText;
-      } catch {
-        errorMessage = errorText;
+        console.error("Parsed Error Data:", errorData);
+
+        // Check for common ASP.NET validation error formats
+        if (errorData.errors) {
+          console.error("Validation Errors:", errorData.errors);
+        }
+        if (errorData.detail) {
+          console.error("Error Detail:", errorData.detail);
+        }
+      } catch (parseError) {
+        console.error("Could not parse error as JSON:", parseError);
       }
 
-      throw new Error(errorMessage);
+      throw new Error(errorText);
     }
 
     return await res.json();
