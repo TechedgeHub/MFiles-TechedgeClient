@@ -334,17 +334,24 @@ function useCascadingObjects() {
           });
 
         // Verify required fields are present
-        const missingRequired = allProperties.filter(
-          (prop) => prop.isRequired && !formData[prop.propId]
-        );
-
-        if (missingRequired.length > 0) {
-          throw new Error(
-            `Missing required fields: ${missingRequired
-              .map((p) => p.title)
-              .join(", ")}`
+        // In your useCascadingObjects.js validation logic
+        const checkRequiredFields = () => {
+          const requiredFields = classMetadata.filter(
+            (prop) => prop.isRequired && !prop.isAutomatic // Exclude automatic fields
           );
-        }
+
+          const missingFields = requiredFields.filter((field) => {
+            const property = properties.find((p) => p.propId === field.propId);
+            return !property || !property.value || property.value === "";
+          });
+
+          if (missingFields.length > 0) {
+            const fieldNames = missingFields
+              .map((field) => field.title)
+              .join(", ");
+            throw new Error(`Missing required fields: ${fieldNames}`);
+          }
+        };
 
         console.log("Properties array structure:", properties);
         console.log(
@@ -356,15 +363,39 @@ function useCascadingObjects() {
           objectId: selectedObjectType.objectid,
           classId: parseInt(selectedClassId),
           properties: properties
-            .filter((property) => property.value && property.value !== "")
+            .filter(
+              (property) =>
+                !property.isAutomatic && property.value && property.value !== ""
+            )
             .map((property) => ({
               propId: property.propId,
-              value: String(property.value),
+              value: formatPropertyValue(property), // Use a helper function
               propertytype: property.propertytype,
             })),
           mfilesCreate: true,
           ...(isDocumentObject(selectedObjectType) && { uploadId }),
         };
+
+        // Add this helper function
+        function formatPropertyValue(property) {
+          switch (property.propertytype) {
+            case "MFDatatypeLookup":
+              // Single lookup: extract the ID
+              return String(property.value.id);
+
+            case "MFDatatypeMultiSelectLookup":
+              // Multi-select lookup: join IDs with commas
+              return property.value.map((item) => item.id).join(",");
+
+            case "MFDatatypeBoolean":
+              // Boolean: convert to string
+              return String(property.value);
+
+            default:
+              // All other types: convert to string
+              return String(property.value);
+          }
+        }
 
         console.log("Final payload:", payload);
 
