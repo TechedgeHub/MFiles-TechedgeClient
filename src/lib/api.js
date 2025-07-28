@@ -2,6 +2,7 @@
 
 const BASE_URL = import.meta.env.VITE_API_BASE_URL;
 
+//fecth object types
 export async function fetchObjectTypes() {
   const res = await fetch(
     `${BASE_URL}/api/MfilesObjects/GetVaultsObjectsTypes`
@@ -10,7 +11,7 @@ export async function fetchObjectTypes() {
   return await res.json();
 }
 
-//class objectId
+// fetch class based on object type
 export async function fetchObjectClasses(objectId) {
   const res = await fetch(
     `${BASE_URL}/api/MfilesObjects/GetObjectClasses/${objectId}`
@@ -19,7 +20,7 @@ export async function fetchObjectClasses(objectId) {
     throw new Error("Failed to fetch classes, ensure you pick object ID");
   return await res.json();
 }
-// class properties
+// show class properties
 export async function fetchClassProps(objectTypeId, classId) {
   const res = await fetch(
     `${BASE_URL}/api/MfilesObjects/ClassProps/${objectTypeId}/${classId}`
@@ -28,7 +29,7 @@ export async function fetchClassProps(objectTypeId, classId) {
   return await res.json();
 }
 
-// create object to add to mfiles client
+// create new object to add to mfiles client
 export async function createObjects(objectData) {
   try {
     const res = await fetch(`${BASE_URL}/api/objectinstance/ObjectCreation`, {
@@ -37,7 +38,6 @@ export async function createObjects(objectData) {
         "Content-Type": "application/json",
       },
       body: JSON.stringify(objectData, (key, value) => {
-        // Convert empty strings to null for M-Files
         if (value === "") return null;
         return value;
       }),
@@ -64,8 +64,7 @@ export async function createObjects(objectData) {
   }
 }
 
-//data with file uploads
-
+//objects with data file uploads
 export async function uploadFiles(file) {
   const formData = new FormData();
   formData.append("formFiles", file);
@@ -84,6 +83,9 @@ export const fetchClassMetadata = async (objectId, classId) => {
   const response = await fetch(
     `https://mfilesdemoapi.alignsys.tech/api/MfilesObjects/ClassProps/${objectId}/${classId}`
   );
+  // const response = await fetch(
+  //   `${BASE_URL}/api/MfilesObjects/ClassProps/${objectId}/${classId}`
+  // )
   if (!response.ok) throw new Error("Failed to fetch class metadata");
   return response.json();
 };

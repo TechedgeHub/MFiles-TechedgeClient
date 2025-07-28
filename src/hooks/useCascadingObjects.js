@@ -40,7 +40,7 @@ function useCascadingObjects() {
     ) {
       return propertyType;
     }
-
+//Datatype used in M-Files
     const typeMap = {
       1: "MFDatatypeText",
       2: "MFDatatypeInteger",
@@ -70,7 +70,7 @@ function useCascadingObjects() {
     error: propsError,
   } = useClassProps(selectedObjectType?.objectid, selectedClassId);
 
-  // Combined properties for the form (only for documents)
+  // Combined properties for the form (specifically for document objects)
   const allProperties = useMemo(() => {
     if (!isDocumentObject(selectedObjectType)) {
       return classProps || [];
@@ -142,7 +142,7 @@ function useCascadingObjects() {
       try {
         const data = await fetchObjectClasses(selectedObjectType.objectid);
 
-        // For documents, get all classes; for non-documents, only ungrouped
+        //Get all classes for documents only, for non-documents only ungrouped
         const allClasses = isDocumentObject(selectedObjectType)
           ? [
               ...(data.unGrouped || []),
@@ -206,7 +206,7 @@ function useCascadingObjects() {
         const isDocument = isDocumentObject(selectedObjectType);
         let uploadId = null;
 
-        // Handle file upload for documents
+        //File upload for documents
         if (isDocument) {
           if (!selectedFile) {
             throw new Error("File is required for document objects");
@@ -215,30 +215,29 @@ function useCascadingObjects() {
           uploadId = uploadResult.uploadID;
         }
 
-        // Determine the title
         let finalTitle = "";
 
         if (isDocument) {
-          // For documents: use filename or form title
+          // Name documents based on filename or form title else unititled doc
           finalTitle = formData[0] || selectedFile?.name || "Untitled Document";
         } else {
-          // For non-documents: look for title in form data or use default
+          // For non-documents,look for title in form data or use default
           finalTitle =
             formData[0] ||
-            Object.values(formData)[0] || // Use first form value if available
+            Object.values(formData)[0] || // specifically use first name if available
             selectedObjectType?.namesingular ||
             "New Object";
         }
 
         // Prepare properties from form data (excluding title which we'll add separately)
         const formProperties = Object.entries(formData)
-          .filter(([propId]) => propId !== "0") // Exclude title property
+          .filter(([propId]) => propId !== "0") 
           .filter(
             ([_, value]) =>
               value !== undefined && value !== null && value !== ""
           )
           .map(([propId, value]) => {
-            // Find property metadata
+            // Autopopulate MD based on Class and Object.
             const propMeta = (
               isDocument ? allProperties : classProps || []
             ).find((p) => {
@@ -260,17 +259,17 @@ function useCascadingObjects() {
             };
           });
 
-        // Always add title property as the first property
+        // Title property is always the first property
         const properties = [
           {
             value: finalTitle,
-            propId: 0, // M-Files standard title property ID
+            propId: 0, 
             propertytype: "MFDatatypeText",
           },
           ...formProperties,
         ];
 
-        // Create the payload
+        // Indicate the payload --for debug
         const payload = {
           objectID: selectedObjectType.objectid,
           classID: parseInt(selectedClassId),
@@ -280,11 +279,10 @@ function useCascadingObjects() {
 
         console.log("Final payload:", payload);
 
-        // Submit data
+        // Send data --error prone
         await createObjects(payload);
 
         setSubmissionState({ loading: false, error: null, success: true });
-        resetForm();
       } catch (error) {
         console.error("Submission error:", error);
         setSubmissionState({
