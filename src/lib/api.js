@@ -89,3 +89,21 @@ export const fetchClassMetadata = async (objectId, classId) => {
   if (!response.ok) throw new Error("Failed to fetch class metadata");
   return response.json();
 };
+
+// Get all valid options for a lookup property
+export async function fetchLookupOptions(propertyId) {
+  const res = await fetch(`${BASE_URL}/api/ValuelistInstance/${propertyId}`);
+  if (!res.ok) throw new Error("Failed to fetch lookup options");
+  return await res.json();
+}
+
+// Search lookup values (optional)
+export async function searchLookupOptions(propertyId, searchPhrase = "") {
+  const res = await fetch(
+    `${BASE_URL}/api/ValuelistInstance/Search/${encodeURIComponent(
+      searchPhrase
+    )}/${propertyId}`
+  );
+  if (!res.ok) throw new Error("Failed to search lookup options");
+  return await res.json();
+}

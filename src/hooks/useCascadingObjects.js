@@ -5,10 +5,11 @@ import {
   fetchObjectClasses,
   createObjects,
   uploadFiles,
+  fetchLookupOptions,
   fetchClassMetadata,
 } from "@/lib/api";
 import useClassProps from "./useClassProps";
-import { useState, useEffect, useCallback, useMemo } from "react";
+import { useState, useEffect, useCallback, useMemo, useRef } from "react";
 
 function useCascadingObjects() {
   // State management
@@ -20,13 +21,18 @@ function useCascadingObjects() {
   const [selectedFile, setSelectedFile] = useState(null);
   const [typesLoading, setTypesLoading] = useState(false);
   const [documentMetadata, setDocumentMetadata] = useState([]);
+  const [lookupOptions, setLookupOptions] = useState({});
   const [submissionState, setSubmissionState] = useState({
     loading: false,
     error: null,
     success: false,
   });
 
-  // Helper functions
+  // Use refs to prevent infinite re-renders
+  const isDocumentObjectRef = useRef();
+  const getMFilesPropertyTypeRef = useRef();
+
+  // Helper functions - stabilized with useCallback
   const isDocumentObject = useCallback((objectType) => {
     if (!objectType) return false;
     return objectType.namesingular.toLowerCase().includes("document");
@@ -40,7 +46,7 @@ function useCascadingObjects() {
     ) {
       return propertyType;
     }
-//Datatype used in M-Files
+
     const typeMap = {
       1: "MFDatatypeText",
       2: "MFDatatypeInteger",
@@ -63,6 +69,10 @@ function useCascadingObjects() {
     return typeMap[propertyType] || "MFDatatypeText";
   }, []);
 
+  // Store refs
+  isDocumentObjectRef.current = isDocumentObject;
+  getMFilesPropertyTypeRef.current = getMFilesPropertyType;
+
   // Fetch class properties
   const {
     classProps,
@@ -70,7 +80,7 @@ function useCascadingObjects() {
     error: propsError,
   } = useClassProps(selectedObjectType?.objectid, selectedClassId);
 
-  // Combined properties for the form (specifically for document objects)
+  // Combined properties for the form - stabilized dependencies
   const allProperties = useMemo(() => {
     if (!isDocumentObject(selectedObjectType)) {
       return classProps || [];
@@ -142,7 +152,6 @@ function useCascadingObjects() {
       try {
         const data = await fetchObjectClasses(selectedObjectType.objectid);
 
-        //Get all classes for documents only, for non-documents only ungrouped
         const allClasses = isDocumentObject(selectedObjectType)
           ? [
               ...(data.unGrouped || []),
@@ -172,21 +181,93 @@ function useCascadingObjects() {
     loadClasses();
   }, [selectedObjectType, isDocumentObject]);
 
-  // Reset form when class changes
+  // Fetch lookup options when object type changes
+  useEffect(() => {
+    if (!selectedObjectType) return;
+
+    // Fetch Driver options for Cars (objectid 130)
+    if (selectedObjectType.objectid === 130) {
+      fetchLookupOptions(1104).then((data) =>
+        setLookupOptions((prev) => ({ ...prev, 1104: data }))
+      );
+    }
+  }, [selectedObjectType]);
+
+  // Fetch lookup options when properties change
+  useEffect(() => {
+    const fetchAllLookups = async () => {
+      const lookups = allProperties.filter(
+        (p) =>
+          p.propertytype === "MFDatatypeLookup" ||
+          p.propertytype === "MFDatatypeMultiSelectLookup"
+      );
+
+      const options = {};
+      for (const prop of lookups) {
+        try {
+          const data = await fetchLookupOptions(prop.propId);
+          options[prop.propId] = data;
+        } catch (error) {
+          console.error(`Failed to fetch options for ${prop.title}:`, error);
+          options[prop.propId] = [];
+        }
+      }
+      setLookupOptions(options);
+    };
+
+    if (allProperties.length > 0) fetchAllLookups();
+  }, [allProperties]);
+
+  // Reset form when class changes - stabilized with useCallback
   const resetForm = useCallback(() => {
-    setFormData({});
+    const currentProps = isDocumentObjectRef.current(selectedObjectType)
+      ? allProperties
+      : classProps || [];
+
+    const initialValues = {};
+    currentProps.forEach((prop) => {
+      initialValues[prop.propId] =
+        prop.propertytype === "MFDatatypeBoolean"
+          ? false
+          : prop.propertytype === "MFDatatypeMultiSelectLookup"
+          ? []
+          : prop.propertytype === "MFDatatypeLookup"
+          ? null
+          : "";
+    });
+    setFormData(initialValues);
     setSelectedFile(null);
-    setSubmissionState((prev) => ({ ...prev, error: null, success: false }));
-  }, []);
+    setSubmissionState({ loading: false, error: null, success: false });
+  }, [selectedObjectType, allProperties, classProps]);
 
   useEffect(() => {
     resetForm();
   }, [selectedClassId, resetForm]);
 
   // Event handlers
-  const handleInputChange = useCallback((propId, value) => {
-    setFormData((prev) => ({ ...prev, [propId]: value }));
-  }, []);
+  const handleInputChange = useCallback(
+    (propId, value) => {
+      setFormData((prev) => {
+        const currentProps = isDocumentObjectRef.current(selectedObjectType)
+          ? allProperties
+          : classProps || [];
+        const prop = currentProps.find((p) => p.propId === propId);
+        let formattedValue = value;
+
+        // Special formatting for lookup types
+        if (prop?.propertytype === "MFDatatypeLookup") {
+          formattedValue = value?.id ? value : { id: Number(value) };
+        } else if (prop?.propertytype === "MFDatatypeMultiSelectLookup") {
+          formattedValue = Array.isArray(value)
+            ? value.map((item) => ({ id: Number(item?.id || item) }))
+            : [];
+        }
+
+        return { ...prev, [propId]: formattedValue };
+      });
+    },
+    [allProperties, classProps, selectedObjectType]
+  );
 
   const handleFileChange = useCallback((file) => {
     setSelectedFile(file);
@@ -203,10 +284,9 @@ function useCascadingObjects() {
           throw new Error("Please select both object type and class");
         }
 
-        const isDocument = isDocumentObject(selectedObjectType);
+        const isDocument = isDocumentObjectRef.current(selectedObjectType);
         let uploadId = null;
 
-        //File upload for documents
         if (isDocument) {
           if (!selectedFile) {
             throw new Error("File is required for document objects");
@@ -218,58 +298,49 @@ function useCascadingObjects() {
         let finalTitle = "";
 
         if (isDocument) {
-          // Name documents based on filename or form title else unititled doc
           finalTitle = formData[0] || selectedFile?.name || "Untitled Document";
         } else {
-          // For non-documents,look for title in form data or use default
           finalTitle =
             formData[0] ||
-            Object.values(formData)[0] || // specifically use first name if available
+            (isDocument ? selectedFile?.name : null) ||
             selectedObjectType?.namesingular ||
             "New Object";
         }
 
-        // Prepare properties from form data (excluding title which we'll add separately)
-        const formProperties = Object.entries(formData)
-          .filter(([propId]) => propId !== "0") 
-          .filter(
-            ([_, value]) =>
-              value !== undefined && value !== null && value !== ""
-          )
-          .map(([propId, value]) => {
-            // Autopopulate MD based on Class and Object.
-            const propMeta = (
-              isDocument ? allProperties : classProps || []
-            ).find((p) => {
-              const numPropId = Number(propId);
-              return (
-                p.propertyDefId === numPropId ||
-                p.id === numPropId ||
-                p.propertyDefinitionId === numPropId ||
-                p.propertyId === numPropId ||
-                p.ID === numPropId ||
-                p.propId === numPropId
-              );
-            });
+        // Prepare properties from form data
+        const currentProps = isDocument ? allProperties : classProps || [];
 
-            return {
-              value: String(value),
-              propId: Number(propId),
-              propertytype: getMFilesPropertyType(propMeta?.propertytype),
-            };
-          });
+        const properties = currentProps.map((prop) => {
+          let value = formData[prop.propId];
 
-        // Title property is always the first property
-        const properties = [
-          {
-            value: finalTitle,
-            propId: 0, 
-            propertytype: "MFDatatypeText",
-          },
-          ...formProperties,
-        ];
+          // Format value based on type
+          switch (prop.propertytype) {
+            case "MFDatatypeLookup":
+              value = value?.id ? { id: value.id } : null;
+              break;
+            case "MFDatatypeMultiSelectLookup":
+              value = Array.isArray(value) ? value : [];
+              break;
+            case "MFDatatypeDate":
+              value = value
+                ? new Date(value).toISOString().split("T")[0]
+                : null;
+              break;
+            case "MFDatatypeBoolean":
+              value = Boolean(value);
+              break;
+            default:
+              value =
+                value !== null && value !== undefined ? String(value) : null;
+          }
 
-        // Indicate the payload --for debug
+          return {
+            propId: prop.propId,
+            propertytype: getMFilesPropertyTypeRef.current(prop.propertytype),
+            value,
+          };
+        });
+
         const payload = {
           objectID: selectedObjectType.objectid,
           classID: parseInt(selectedClassId),
@@ -279,7 +350,6 @@ function useCascadingObjects() {
 
         console.log("Final payload:", payload);
 
-        // Send data --error prone
         await createObjects(payload);
 
         setSubmissionState({ loading: false, error: null, success: true });
@@ -302,9 +372,6 @@ function useCascadingObjects() {
       allProperties,
       classProps,
       selectedFile,
-      getMFilesPropertyType,
-      isDocumentObject,
-      resetForm,
     ]
   );
 
@@ -333,6 +400,7 @@ function useCascadingObjects() {
     allProperties: isDocumentObject(selectedObjectType)
       ? allProperties
       : classProps || [],
+    lookupOptions,
   };
 }
 
