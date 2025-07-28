@@ -355,12 +355,14 @@ function useCascadingObjects() {
         const payload = {
           objectId: selectedObjectType.objectid,
           classId: parseInt(selectedClassId),
-          properties: properties.map((property) => ({
-            propId: property.propId,
-            value: String(property.value), // Convert ALL values to strings
-            propertytype: property.propertytype,
-          })),
-          mfilesCreate: true, // or some required value
+          properties: properties
+            .filter((property) => property.value && property.value !== "")
+            .map((property) => ({
+              propId: property.propId,
+              value: String(property.value),
+              propertytype: property.propertytype,
+            })),
+          mfilesCreate: true,
           ...(isDocumentObject(selectedObjectType) && { uploadId }),
         };
 
