@@ -32,7 +32,7 @@ function useCascadingObjects() {
   const isDocumentObjectRef = useRef();
   const getMFilesPropertyTypeRef = useRef();
 
-  // Helper functions - stabilized with useCallback
+  // Helper functions ,utilize callback functions
   const isDocumentObject = useCallback((objectType) => {
     if (!objectType) return false;
     return objectType.namesingular.toLowerCase().includes("document");
@@ -80,7 +80,7 @@ function useCascadingObjects() {
     error: propsError,
   } = useClassProps(selectedObjectType?.objectid, selectedClassId);
 
-  // Combined properties for the form - stabilized dependencies
+  // Combined properties for the form , both document and non-document
   const allProperties = useMemo(() => {
     if (!isDocumentObject(selectedObjectType)) {
       return classProps || [];
@@ -311,11 +311,9 @@ function useCascadingObjects() {
         const currentProps = isDocument ? allProperties : classProps || [];
 
         const properties = allProperties
-          .filter((prop) => !prop.isHidden && !prop.isAutomatic) // Skip hidden/auto props
+          .filter((prop) => !prop.isHidden && !prop.isAutomatic)
           .map((prop) => {
             let value = formData[prop.propId];
-
-            // Special formatting
             if (prop.propertytype === "MFDatatypeDate" && value) {
               value = new Date(value).toISOString().split("T")[0];
             } else if (prop.propertytype === "MFDatatypeTimestamp" && value) {
@@ -333,11 +331,9 @@ function useCascadingObjects() {
             };
           });
 
-        // Verify required fields are present
-        // In your useCascadingObjects.js validation logic
         const checkRequiredFields = () => {
           const requiredFields = classMetadata.filter(
-            (prop) => prop.isRequired && !prop.isAutomatic // Exclude automatic fields
+            (prop) => prop.isRequired && !prop.isAutomatic
           );
 
           const missingFields = requiredFields.filter((field) => {
@@ -369,30 +365,23 @@ function useCascadingObjects() {
             )
             .map((property) => ({
               propId: property.propId,
-              value: formatPropertyValue(property), // Use a helper function
+              value: formatPropertyValue(property),
               propertytype: property.propertytype,
             })),
           mfilesCreate: true,
           ...(isDocumentObject(selectedObjectType) && { uploadId }),
         };
 
-        // Add this helper function
         function formatPropertyValue(property) {
           switch (property.propertytype) {
             case "MFDatatypeLookup":
-              // Single lookup: extract the ID
+              // Extract id for Single lookup
               return String(property.value.id);
-
             case "MFDatatypeMultiSelectLookup":
-              // Multi-select lookup: join IDs with commas
               return property.value.map((item) => item.id).join(",");
-
             case "MFDatatypeBoolean":
-              // Boolean: convert to string
               return String(property.value);
-
             default:
-              // All other types: convert to string
               return String(property.value);
           }
         }

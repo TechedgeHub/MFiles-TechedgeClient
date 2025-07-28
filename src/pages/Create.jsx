@@ -9,7 +9,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import useCascadingObjects from "@/hooks/useCascadingObjects";
-import Navbar from "@/layout/Navbar";
+
 import React from "react";
 
 const Create = () => {
@@ -43,7 +43,6 @@ const Create = () => {
 
   return (
     <>
-      <Navbar />
       <div className="flex flex-col gap-5 justify-center mt-10 items-center">
         <div className="flex flex-col gap-2 text-center">
           <h1 className="text-4xl text-primary">Create New Object</h1>

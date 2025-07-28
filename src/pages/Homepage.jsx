@@ -1,7 +1,6 @@
 /** @format */
 
 import React from "react";
-import Navbar from "../layout/Navbar";
 import { Button } from "@/components/ui/button";
 import {
   CircleCheck,
@@ -16,7 +15,7 @@ import { FaLocationArrow } from "react-icons/fa6";
 import { RiFileList2Line } from "react-icons/ri";
 import { NavLink } from "react-router-dom";
 
-// Reusable card component for displaying object creation steps with an icon and label
+//  cards for displaying object creation steps with an icon and label
 const StepsCard = ({ icon: Icon, label, description, step }) => (
   <Card className="relative flex flex-col items-center justify-center p-6 gap-4 shadow-sm hover:shadow-lg transition-shadow duration-300 rounded-lg">
     <div className="absolute top-4 right-4 w-8 h-8 rounded-full bg-gradient-to-br from-blue-900 to-blue-500 flex items-center justify-center text-white font-bold text-sm select-none z-10">
@@ -35,7 +34,6 @@ const Homepage = () => {
   return (
     <>
       {" "}
-      <Navbar />
       <div className="h-screen flex flex-col gap-4 items-center py-8 mt-8 px-8">
         <div className="w-full px-4 sm:px-8 md:px-12 max-w-6xl mx-auto text-center space-y-6">
           <h2 className="font-bold text-3xl sm:text-4xl md:text-5xl text-primary">

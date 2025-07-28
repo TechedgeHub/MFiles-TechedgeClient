@@ -5,18 +5,20 @@ import Homepage from "./pages/Homepage";
 import { BrowserRouter, Route, Routes } from "react-router-dom";
 import Create from "./pages/Create";
 import Views from "./pages/Views";
+import Navbar from "./layout/Navbar";
+import Help from "./pages/Help";
 
 const App = () => {
   return (
-    <>
-      <BrowserRouter>
-        <Routes>
-          <Route path="/" element={<Homepage />} />
-          <Route path="/create" element={<Create />} />
-          <Route path="/views" element={<Views />} />
-        </Routes>
-      </BrowserRouter>
-    </>
+    <BrowserRouter>
+      <Navbar />
+      <Routes>
+        <Route path="/" element={<Homepage />} />
+        <Route path="/create" element={<Create />} />
+        <Route path="/views" element={<Views />} />
+        <Route path="/help" element={<Help />} />
+      </Routes>
+    </BrowserRouter>
   );
 };
 

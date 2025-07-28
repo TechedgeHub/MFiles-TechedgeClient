@@ -19,7 +19,14 @@ const Navbar = () => {
 
         {/* Desktop nav */}
         <nav className="hidden md:flex items-center gap-6">
-          <NavLink to="/" end className="hover:text-gray-300">
+          <NavLink
+            to="/"
+            className={({ isActive }) =>
+              isActive
+                ? "bg-[#000042] text-white font-bold px-3 py-1 rounded"
+                : "hover:text-gray-300"
+            }
+          >
             Home
           </NavLink>
           <NavLink
