@@ -1,5 +1,3 @@
-<!-- @format -->
-
 # M-Files Object Creator
 
 A simplified web interface for creating M-Files objects without the complexity of the full M-Files client.
@@ -63,7 +61,7 @@ GET  /api/ValuelistInstance/{propertyId}
 POST /api/objectinstance/FilesUploadAsync
 ```
 
-## Supported Objects
+##  Supported Objects
 
 - **Students** - Admission records and details
 - **Cars** - Vehicle registration and management
@@ -81,11 +79,11 @@ npm run build
 
 Works with Netlify, Vercel, AWS S3, or any static hosting service.
 
-## Browser Support
+##  Browser Support
 
 Chrome 90+ | Firefox 88+ | Safari 14+ | Edge 90+
 
-## Contributing
+##  Contributing
 
 1. Fork the repository
 2. Create feature branch (`git checkout -b feature/new-feature`)
@@ -93,7 +91,7 @@ Chrome 90+ | Firefox 88+ | Safari 14+ | Edge 90+
 4. Push to branch (`git push origin feature/new-feature`)
 5. Open Pull Request
 
-## Support
+##  Support
 
 - **Technical Support**: raise issue
 - **Documentation**: Built-in `/help` page
@@ -105,4 +103,4 @@ MIT License - see [LICENSE](LICENSE) file for details.
 ---
 
 **Built by Elaine Yvette @ Techedge Africa**  
-_Powered by Techedge & M-Files_
+*Powered by Techedge & M-Files*
