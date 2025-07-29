@@ -218,7 +218,7 @@ function useCascadingObjects() {
     if (allProperties.length > 0) fetchAllLookups();
   }, [allProperties]);
 
-  // Reset form when class changes - stabilized with useCallback
+  // Reset form when class changes
   const resetForm = useCallback(() => {
     const currentProps = isDocumentObjectRef.current(selectedObjectType)
       ? allProperties
@@ -375,7 +375,6 @@ function useCascadingObjects() {
         function formatPropertyValue(property) {
           switch (property.propertytype) {
             case "MFDatatypeLookup":
-              // Extract id for Single lookup
               return String(property.value.id);
             case "MFDatatypeMultiSelectLookup":
               return property.value.map((item) => item.id).join(",");

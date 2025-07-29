@@ -90,7 +90,6 @@ const FAQItem = ({ question, answer }) => (
 const Help = () => {
   return (
     <div className="min-h-screen bg-gray-50">
-      {/* Hero Section */}
       <div className="bg-primary text-white py-12">
         <div className="max-w-4xl mx-auto px-4 text-center">
           <HelpCircle className="w-16 h-16 mx-auto mb-4" />
@@ -102,7 +101,6 @@ const Help = () => {
       </div>
 
       <div className="max-w-4xl mx-auto px-4 py-12">
-        {/* Getting Started */}
         <section className="mb-12">
           <h2 className="text-3xl font-bold text-primary mb-6 flex items-center gap-2">
             <CircleChevronRight className="w-8 h-8" />
@@ -204,7 +202,7 @@ const Help = () => {
           />
         </section>
 
-        {/* Field Types */}
+        {/* The Field Types */}
         <section className="mb-12">
           <h2 className="text-3xl font-bold text-primary mb-6">
             Understanding Field Types
@@ -287,7 +285,7 @@ const Help = () => {
           </div>
         </section>
 
-        {/* Common Errors */}
+        {/*Display Common Errors--likely to be encountered */}
         <section className="mb-12">
           <h2 className="text-3xl font-bold text-primary mb-6 flex items-center gap-2">
             <AlertCircle className="w-8 h-8" />
@@ -428,7 +426,7 @@ const Help = () => {
           </Card>
         </section>
 
-        {/* Contact Support */}
+        {/* Contact Support--footer */}
         <section className="mb-12">
           <h2 className="text-3xl font-bold text-primary mb-6 flex items-center gap-2">
             <Users className="w-8 h-8" />
