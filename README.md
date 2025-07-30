@@ -26,8 +26,8 @@ Streamlined web application that connects to M-Files vaults, allowing users to c
 
 ```bash
 # Clone repository
-git clone https://github.com/your-username/mfiles-object-creator.git
-cd mfiles-object-creator
+git clone https://github.com/TechedgeHub/MFiles-TechedgeClient.git
+cd techedge
 
 # Install dependencies
 npm install
