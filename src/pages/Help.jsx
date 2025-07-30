@@ -25,8 +25,8 @@ import {
 import { FaLocationArrow } from "react-icons/fa6";
 import { RiFileList2Line } from "react-icons/ri";
 import { NavLink } from "react-router-dom";
+import { stepGuidedData } from "@/assets/assets";
 
-// Collapsible section component
 const CollapsibleSection = ({ title, children, defaultOpen = false }) => {
   const [isOpen, setIsOpen] = useState(defaultOpen);
 
@@ -52,7 +52,6 @@ const CollapsibleSection = ({ title, children, defaultOpen = false }) => {
   );
 };
 
-// Step guide component--borrow from homepage
 const StepGuide = ({ icon: Icon, step, title, description, details }) => (
   <Card className="mb-6">
     <CardHeader>
@@ -80,7 +79,6 @@ const StepGuide = ({ icon: Icon, step, title, description, details }) => (
   </Card>
 );
 
-// FAQ item component
 const FAQItem = ({ question, answer }) => (
   <CollapsibleSection title={question}>
     <p className="text-gray-600">{answer}</p>
@@ -141,65 +139,22 @@ const Help = () => {
           </Card>
         </section>
 
-        {/* Step-by-Step Guide */}
         <section className="mb-12">
           <h2 className="text-3xl font-bold text-primary mb-6 flex items-center gap-2">
             <SquareChartGantt className="w-8 h-8" />
             Step-by-Step Creation Guide
           </h2>
 
-          <StepGuide
-            icon={FileText}
-            step="1"
-            title="Select Type"
-            description="Choose the type of object you want to create from pre-configured options."
-            details={[
-              "Student - For adding student records with admission details",
-              "Car - For vehicle registration and management",
-              "Staff - For employee records and information",
-              "Each type has specific fields tailored to its purpose",
-            ]}
-          />
-
-          <StepGuide
-            icon={Grid3x3}
-            step="2"
-            title="Choose Class"
-            description="Select the appropriate class for your object type."
-            details={[
-              "Classes define the specific properties and fields available",
-              "Most object types have a default class (e.g., 'Student' class for Student objects)",
-              "Choose from grouped or ungrouped classes as available",
-              "The class determines what information you can store",
-            ]}
-          />
-
-          <StepGuide
-            icon={RiFileList2Line}
-            step="3"
-            title="Fill Form"
-            description="Complete the dynamic form with your object's information."
-            details={[
-              "Required fields are marked with a red asterisk (*)",
-              "Optional fields can be left empty if not needed",
-              "Use the date picker for date fields",
-              "Select from dropdown options for lookup fields",
-              "Automatic fields are handled by the system",
-            ]}
-          />
-
-          <StepGuide
-            icon={FaLocationArrow}
-            step="4"
-            title="Submit"
-            description="Review and submit your object for creation."
-            details={[
-              "Review all entered information before submitting",
-              "Click 'Create Object' to process your submission",
-              "Wait for confirmation message",
-              "Your object will be created in the M-Files system",
-            ]}
-          />
+          {stepGuidedData.map((step) => (
+            <StepGuide
+              key={step.step}
+              icon={step.icon}
+              step={step.step}
+              title={step.title}
+              description={step.description}
+              details={step.details}
+            />
+          ))}
         </section>
 
         {/* The Field Types */}
