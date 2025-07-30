@@ -1,5 +1,6 @@
 /** @format */
 
+import { CheckCircle, Clock, Search } from "lucide";
 import { FileText, Grid3X3 } from "lucide-react";
 import { FaLocationArrow } from "react-icons/fa6";
 import { RiFileList2Line } from "react-icons/ri";
@@ -52,6 +53,49 @@ export const stepGuidedData = [
       "Click 'Create Object' to process your submission",
       "Wait for confirmation message",
       "Your object will be created in the M-Files system",
+    ],
+  },
+];
+
+export const fieldDataTypes = [
+  {
+    icon: FileText,
+    title: "Text Fields",
+    description: "For Writting text inputs ",
+    items: [
+      "Single line text (names, titles)",
+      "Multi-line text (descriptions)",
+      "Keep entries clear and concise",
+    ],
+  },
+  {
+    icon: Clock,
+    title: "Date Field",
+    description: "For date and time,",
+    items: [
+      "Use the date picker widget",
+      "Format: YYYY-MM-DD",
+      "Required dates must be filled",
+    ],
+  },
+  {
+    icon: Search,
+    title: "LookUp Fields",
+    description: "Used to earch predefined conditions such as staff",
+    items: [
+      "Single select (choose one option)",
+      "Multi-select (choose multiple)",
+      "Options load automatically",
+    ],
+  },
+  {
+    icon: CheckCircle,
+    title: "Yes/No Fields",
+    description: "When to choose true or false",
+    items: [
+      "Checkbox or toggle switch",
+      'Check for "Yes" or "True"',
+      'Leave unchecked for "No of False"',
     ],
   },
 ];

@@ -25,7 +25,7 @@ import {
 import { FaLocationArrow } from "react-icons/fa6";
 import { RiFileList2Line } from "react-icons/ri";
 import { NavLink } from "react-router-dom";
-import { stepGuidedData } from "@/assets/assets";
+import { fieldDataTypes, stepGuidedData } from "@/assets/assets";
 
 const CollapsibleSection = ({ title, children, defaultOpen = false }) => {
   const [isOpen, setIsOpen] = useState(defaultOpen);
@@ -164,79 +164,24 @@ const Help = () => {
           </h2>
 
           <div className="grid md:grid-cols-2 gap-6">
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <FileText className="w-5 h-5" />
-                  Text Fields
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <p className="text-gray-600 mb-3">
-                  For names, descriptions, and general text input.
-                </p>
-                <ul className="space-y-1 text-sm">
-                  <li>• Single line text (names, titles)</li>
-                  <li>• Multi-line text (descriptions)</li>
-                  <li>• Keep entries clear and concise</li>
-                </ul>
-              </CardContent>
-            </Card>
-
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <Clock className="w-5 h-5" />
-                  Date Fields
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <p className="text-gray-600 mb-3">For dates and timestamps.</p>
-                <ul className="space-y-1 text-sm">
-                  <li>• Use the date picker widget</li>
-                  <li>• Format: YYYY-MM-DD</li>
-                  <li>• Required dates must be filled</li>
-                </ul>
-              </CardContent>
-            </Card>
-
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <Search className="w-5 h-5" />
-                  Lookup Fields
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <p className="text-gray-600 mb-3">
-                  For selecting from predefined options.
-                </p>
-                <ul className="space-y-1 text-sm">
-                  <li>• Single select (choose one option)</li>
-                  <li>• Multi-select (choose multiple)</li>
-                  <li>• Options load automatically</li>
-                </ul>
-              </CardContent>
-            </Card>
-
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <CheckCircle className="w-5 h-5" />
-                  Yes/No Fields
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <p className="text-gray-600 mb-3">
-                  For boolean true/false selections.
-                </p>
-                <ul className="space-y-1 text-sm">
-                  <li>• Checkbox or toggle switch</li>
-                  <li>• Check for "Yes" or "True"</li>
-                  <li>• Leave unchecked for "No"</li>
-                </ul>
-              </CardContent>
-            </Card>
+            {fieldDataTypes.map((fieldTypes) => (
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    <FileText className="w-5 h-5" />
+                    {fieldTypes.title}
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <p className="text-gray-600 mb-3">{fieldTypes.description}</p>
+                  <ul className=" list-disc pl-5 space-y-1 text-sm">
+                    {fieldTypes.items.map((item) => (
+                      <li key={item}>{item}</li>
+                    ))}
+                  </ul>
+                </CardContent>
+              </Card>
+            ))}
           </div>
         </section>
 
